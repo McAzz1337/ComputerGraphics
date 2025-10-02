@@ -1,0 +1,41 @@
+# Ignore Visual Studio solution/project files
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# VS local cache
+.vs/
+*.suo
+*.vc.db
+*.vc.opendb
+*.sln.docstates
+
+# Build output
+bin/
+bin-int/
+x64/
+
+# Intermediate / debug files
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.exe
+*.dll
+*.lib
+*.log
+*.tlog
+*.tmp
+
+# Premake binary (but keep premake5.lua)
+premake5.exe
+
+# Vendor
+vendor/
+
+
+# CMake / Premake build dirs (if ever used)
+CMakeFiles/
+CMakeCache.txt
+build/
