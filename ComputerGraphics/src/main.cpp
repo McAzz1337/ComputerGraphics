@@ -11,11 +11,12 @@
 #include "input.h"
 #include "shader.h"
 #include "gldebug.h"
-#include "buffer.h"
-#include "vertexArray.h"
+#include "model_data/buffer.h"
+#include "model_data/vertexArray.h"
+#include "model_data/mesh.h"
 #include "camera.h"
 #include "transform.h"
-#include "gltexture.h"
+#include "texture.h"
 
 void printMat(const glm::mat4& mat, const char* name = "mat") {
 	printf("%s:\n", name);
@@ -64,8 +65,7 @@ int main() {
 		cam.rotate(glm::vec3(0.0f, 1.0f, 0.0f) * -x * delta);
 						 });
 
-	VertexBuffer vbo;
-	IndexBuffer ibo;
+	Mesh mesh("textures/ha.png");
 	{
 		Vertex verts[] = {
 			Vertex({ -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f }),
@@ -73,16 +73,16 @@ int main() {
 			Vertex({ 0.5f, 0.5f, 0.0f }, { 1.0f, 1.0f }),
 			Vertex({ -0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f }),
 		};
-		vbo.bufferData(verts);
+		VertexBuffer vbo(verts, 4);
 		uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
-		ibo.bufferData(inds);
+		IndexBuffer ibo(inds, 6);
+		mesh.assignBuffers(vbo, ibo);
+		mesh.bind();
 	}
 
-	VertexArray vao = VertexArray(vbo, ibo);
-
 	Shader::loadShaders("shaders/shaders");
-	Shader* s = Shader::getShader("shaders/shader");
-	Shader* t = Shader::getShader("shaders/tex_shader");
+	Shader* simpleShader = Shader::getShader("shaders/shader");
+	Shader* textureShader = Shader::getShader("shaders/tex_shader");
 	Transform trans1;
 	Transform trans2;
 	input.setAction(GLFW_KEY_UP, [&trans2](float delta) { trans2.translate(Transform::globalUp() * delta); });
@@ -90,9 +90,9 @@ int main() {
 	input.setAction(GLFW_KEY_RIGHT, [&trans2](float delta) { trans2.translate(Transform::globalRight() * delta); });
 	input.setAction(GLFW_KEY_LEFT, [&trans2](float delta) { trans2.translate(-Transform::globalRight() * delta); });
 
-	GLTexture tex("textures/ha.png");
-	t->bind();
-	tex.bind();
+	//Texture tex("textures/ha.png");
+	textureShader->bind();
+	//tex.bind();
 	float scrollTime = 10.0f;
 	float scrollElapsed = 0.0f;
 
@@ -115,23 +115,23 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glm::mat4 pv = cam.getProjectionView();
-		auto mvp = pv *  trans1.getMat();
-		printMat(mvp, "mvo");
-		s->bind();
-		s->setMatrix4("mvp", pv * trans2.getMat());
-		GL_CALL(glDrawElements(GL_TRIANGLES, ibo.getSize(), GL_UNSIGNED_INT, nullptr));
+		auto mvp = pv * trans1.getMat();
+		printMat(mvp, "mvp");
+		simpleShader->bind();
+		simpleShader->setMatrix4("mvp", pv * trans2.getMat());
+		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
-		tex.bind();
-		t->bind();
+		//tex.bind();
+		textureShader->bind();
 		float sin = std::sin(scrollElapsed);
-		float cos = std::cos (scrollElapsed);
+		float cos = std::cos(scrollElapsed);
 		trans1.translate(glm::vec3(-cos, sin, 0.0f) * 0.35f);
 		trans1.translate(glm::vec3(1.5f, 0.0f, 0.0f));
-		t->setUniformf1("scrollX", sin);
-		t->setUniformf1("scrollY", cos);
-		t->setMatrix4("mvp", pv *   trans1.getMat());
+		textureShader->setUniformf1("scrollX", sin);
+		textureShader->setUniformf1("scrollY", cos);
+		textureShader->setMatrix4("mvp", pv * trans1.getMat());
 		trans1.reset();
-		GL_CALL(glDrawElements(GL_TRIANGLES, ibo.getSize(), GL_UNSIGNED_INT, nullptr));
+		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
 		window.swapBuffers();
 	}

@@ -4,7 +4,7 @@
 #include <string>
 
 
-class GLTexture {
+class Texture {
 
 protected:
 	std::string file;
@@ -13,20 +13,19 @@ protected:
 	int h = 0;
 
 public:
-	GLTexture();
-	GLTexture(const GLTexture& other);
-	GLTexture(const std::string& path);
-	virtual ~GLTexture();
+	Texture();
+	Texture(const Texture& other);
+	Texture(const std::string& path);
+	~Texture();
 
 	void bind(int index = 0) const;
-
 
 	inline const std::string& getFilePath() const { return file; }
 	inline uint32_t getId() const { return id; }
 	inline glm::vec2 getSize() const { return glm::vec2((float) w, (float) h); }
 
-	static GLTexture* createEmptyTexture(int width, int height);
-	static GLTexture* createTextureFromData(const unsigned char* data, int width, int height);
+	static Texture createEmptyTexture(int width, int height);
+	static Texture createTextureFromData(const unsigned char* data, int width, int height);
 	static void flipImage(const unsigned char* src, int width, int height, int comp, unsigned char* dst);
 };
 

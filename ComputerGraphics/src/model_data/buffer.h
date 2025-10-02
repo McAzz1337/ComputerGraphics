@@ -16,20 +16,30 @@ public:
 		glGenBuffers(1, &handle);
 		bind();
 	}
+
+	Buffer(const Buffer& other) : handle(other.handle), size(other.size) {}
+
 	Buffer(const T* data, size_t size) {
 		glGenBuffers(1, &handle);
 		bind();
 		bufferData(data, size);
 	}
 
-	void bind() { glBindBuffer(BUFFER_TYPE, handle); }
-
-	void bufferData(const T* data) {
-		this->size = sizeof(data);
-		glBufferData(BUFFER_TYPE, sizeof(data) * sizeof(T), data, GL_STATIC_DRAW);
+	void deallocte() {
+		if (handle != 0) {
+			glDeleteBuffers(1, &handle);
+			handle = 0;
+		}
 	}
 
-	size_t getSize() { return size; }
+	void bind() const { glBindBuffer(BUFFER_TYPE, handle); }
+
+	void bufferData(const T* data, size_t size) {
+		this->size = size;
+		glBufferData(BUFFER_TYPE, size  * sizeof(T), data, GL_STATIC_DRAW);
+	}
+
+	size_t getSize() const { return size; }
 };
 
 typedef Buffer<Vertex, GL_ARRAY_BUFFER> VertexBuffer;

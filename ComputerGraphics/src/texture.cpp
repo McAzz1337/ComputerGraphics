@@ -1,4 +1,4 @@
-#include "gltexture.h"
+#include "texture.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -7,21 +7,18 @@
 #include "stb/stb_image.h"
 
 
+Texture::Texture() {}
 
-
-GLTexture::GLTexture() {}
-
-GLTexture::GLTexture(const GLTexture& other) : id(other.id), w(other.w), h(other.h) {
+Texture::Texture(const Texture& other) : id(other.id), w(other.w), h(other.h), file(other.file) {
 
 }
 
-GLTexture::GLTexture(const std::string& path) : file(path) {
-
+Texture::Texture(const std::string& path) : file(path) {
 	int comp = 0;
-	unsigned char* data = nullptr;
 	unsigned char* flipped = nullptr;
 
 	{
+		unsigned char* data = nullptr;
 		data = stbi_load(path.c_str(), &w, &h, &comp, STBI_rgb_alpha);
 		flipped = new unsigned char[w * comp * h];
 		flipImage(data, w, h, comp, flipped);
@@ -43,22 +40,24 @@ GLTexture::GLTexture(const std::string& path) : file(path) {
 	delete[] flipped;
 }
 
-GLTexture::~GLTexture() {
-	if (id != 0)
+Texture::~Texture() {
+	if (id != 0) {
 		glDeleteTextures(1, &id);
+	}
 }
 
-void GLTexture::bind(int index) const {
-	GL_CALL(glActiveTexture(GL_TEXTURE0 + index));
-	GL_CALL(glBindTextureUnit(index, id));
-	//printf("texture bound at index : %i\n", index);
+void Texture::bind(int index) const {
+	if (id != 0) {
+		GL_CALL(glActiveTexture(GL_TEXTURE0 + index));
+		GL_CALL(glBindTextureUnit(index, id));
+		//printf("texture bound at index : %i\n", index);
+	}
 }
 
-GLTexture* GLTexture::createEmptyTexture(int width, int height) {
-
-	GLTexture* tex = new GLTexture();
-	tex->w = width;
-	tex->h = height;
+Texture Texture::createEmptyTexture(int width, int height) {
+	Texture tex;
+	tex.w = width;
+	tex.h = height;
 
 	int length = height * width * 4;
 	unsigned char* data = new unsigned char[length];
@@ -66,8 +65,8 @@ GLTexture* GLTexture::createEmptyTexture(int width, int height) {
 		data[i] = 0;
 	}
 
-	glGenTextures(1, &tex->id);
-	glBindTexture(GL_TEXTURE_2D, tex->id);
+	glGenTextures(1, &tex.id);
+	glBindTexture(GL_TEXTURE_2D, tex.id);
 
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -85,29 +84,30 @@ GLTexture* GLTexture::createEmptyTexture(int width, int height) {
 }
 
 
-GLTexture* GLTexture::createTextureFromData(const unsigned char* data, int width, int height) {
+Texture Texture::createTextureFromData(const unsigned char* data, int width, int height) {
 
-	GLTexture* tex = new GLTexture();
+	Texture tex;
 
-	tex->w = width;
-	tex->h = height;
+	tex.w = width;
+	tex.h = height;
 
-	glGenTextures(1, &tex->id);
-	glBindTexture(GL_TEXTURE_2D, tex->id);
-
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GL_CALL(glGenTextures(1, &tex.id));
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, tex.id));
 
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+
+	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+
+	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
 
 	return tex;
 }
-void GLTexture::flipImage(const unsigned char* src, int width, int height, int comp, unsigned char* dst) {
+
+void Texture::flipImage(const unsigned char* src, int width, int height, int comp, unsigned char* dst) {
 	int rowSize = width * comp;
 	int lastLine = rowSize * (height - 1);
 
