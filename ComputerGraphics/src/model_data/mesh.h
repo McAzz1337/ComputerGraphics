@@ -19,6 +19,7 @@ public:
 
 	void assignVertexArray(VertexArray vao, IndexBuffer ibo);
 	void assignBuffers(VertexBuffer vbo, IndexBuffer ibo);
+	void assignTexture(const std::string& path);
 
 	void bind() const;
 
