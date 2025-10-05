@@ -6,7 +6,7 @@ Mesh::Mesh() {
 
 Mesh::Mesh(std::string texturePath) : tex(Texture(texturePath)) {
 
-	}
+}
 
 Mesh::Mesh(VertexArray vao, IndexBuffer ibo) : vao(vao), ibo(ibo) {}
 
@@ -24,8 +24,12 @@ void Mesh::assignVertexArray(VertexArray vao, IndexBuffer ibo) {
 }
 
 void Mesh::assignBuffers(VertexBuffer vbo, IndexBuffer ibo) {
-	 vao.assignBuffer(vbo);
-	 this->ibo = ibo;
+	vao.assignBuffer(vbo);
+	this->ibo = ibo;
+}
+
+void Mesh::assignTexture(const std::string& path) {
+	tex.load(path);
 }
 
 void Mesh::bind() const {
