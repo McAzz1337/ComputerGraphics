@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+#include "../model_data/vertex.h"
+
 
 
 	void readFile(const std::string& path, std::string& dst, bool log = false);
@@ -18,3 +20,5 @@
 
 	void writeFile(const std::string& path, const std::string& src);
 
+	void readOBJ(const std::string& path, std::vector<Vertex>& verticies, std::vector<uint32_t>& indicies, std::string& mtl);
+	void readMTL(const std::string& path, std::string& albedo);
