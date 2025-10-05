@@ -11,7 +11,7 @@
 
 #include "gldebug.h"
 
-#include "fileio.h"
+#include "io/fileio.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
