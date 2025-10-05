@@ -18,6 +18,8 @@
 #include "transform.h"
 #include "texture.h"
 
+#include "io/fileio.h"
+
 void printMat(const glm::mat4& mat, const char* name = "mat") {
 	printf("%s:\n", name);
 	for (int i = 0; i < 4; i++) {
@@ -43,6 +45,7 @@ static void cursorPosCallback(GLFWwindow* window, double x, double y) {
 }
 
 int main() {
+
 	Window window("ComputerGraphics", 1440, 1080);
 	window.setKeyCallback(keyCallback);
 	window.setMousePositionCallback(cursorPosCallback);
@@ -65,24 +68,35 @@ int main() {
 		cam.rotate(glm::vec3(0.0f, 1.0f, 0.0f) * -x * delta);
 						 });
 
-	Mesh mesh("textures/ha.png");
-	{
-		Vertex verts[] = {
-			Vertex({ -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f }),
-			Vertex({ 0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f }),
-			Vertex({ 0.5f, 0.5f, 0.0f }, { 1.0f, 1.0f }),
-			Vertex({ -0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f }),
-		};
-		VertexBuffer vbo(verts, 4);
-		uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
-		IndexBuffer ibo(inds, 6);
-		mesh.assignBuffers(vbo, ibo);
-		mesh.bind();
-	}
-
 	Shader::loadShaders("shaders/shaders");
 	Shader* simpleShader = Shader::getShader("shaders/shader");
 	Shader* textureShader = Shader::getShader("shaders/tex_shader");
+
+	Mesh mesh;
+	{
+		Vertex verts[] = {
+			Vertex({ -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }),
+			Vertex({ 0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }),
+			Vertex({ 0.5f, 0.5f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }),
+			Vertex({ -0.5f, 0.5f, 0.0f }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }),
+		};
+		std::vector<Vertex> verticies;
+		std::vector<uint32_t> indicies;
+		std::string mtl;
+		readOBJ("models/die.obj", verticies, indicies, mtl);
+		std::string albedo;
+		readMTL("models/" + mtl, albedo);
+		VertexBuffer vbo(verticies.data(), verticies.size());
+		//VertexBuffer vbo(verts, 4);
+		uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
+		IndexBuffer ibo(indicies.data(), indicies.size());
+		//IndexBuffer ibo(inds, 6);
+		mesh.assignBuffers(vbo, ibo);
+		mesh.assignTexture("models/"+ albedo);
+		//mesh.assignTexture("textures/ha.png");
+		mesh.bind();
+	}
+
 	Transform trans1;
 	Transform trans2;
 	input.setAction(GLFW_KEY_UP, [&trans2](float delta) { trans2.translate(Transform::globalUp() * delta); });
@@ -96,6 +110,7 @@ int main() {
 	float scrollTime = 10.0f;
 	float scrollElapsed = 0.0f;
 
+	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 	std::chrono::time_point last = std::chrono::steady_clock::now();
@@ -112,23 +127,21 @@ int main() {
 
 		input.execute(delta);
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 pv = cam.getProjectionView();
 		auto mvp = pv * trans1.getMat();
-		printMat(mvp, "mvp");
 		simpleShader->bind();
 		simpleShader->setMatrix4("mvp", pv * trans2.getMat());
 		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
-		//tex.bind();
 		textureShader->bind();
 		float sin = std::sin(scrollElapsed);
 		float cos = std::cos(scrollElapsed);
 		trans1.translate(glm::vec3(-cos, sin, 0.0f) * 0.35f);
 		trans1.translate(glm::vec3(1.5f, 0.0f, 0.0f));
-		textureShader->setUniformf1("scrollX", sin);
-		textureShader->setUniformf1("scrollY", cos);
+		//textureShader->setUniformf1("scrollX", sin);
+		//textureShader->setUniformf1("scrollY", cos);
 		textureShader->setMatrix4("mvp", pv * trans1.getMat());
 		trans1.reset();
 		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
