@@ -28,6 +28,10 @@ x64/
 *.tlog
 *.tmp
 
+# Assets
+ComputerGraphics/models/
+ComputerGraphics/textures/
+
 # Premake binary (but keep premake5.lua)
 premake5.exe
 
