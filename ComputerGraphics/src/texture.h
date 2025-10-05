@@ -18,6 +18,7 @@ public:
 	Texture(const std::string& path);
 	~Texture();
 
+	void load(const std::string& path);
 	void bind(int index = 0) const;
 
 	inline const std::string& getFilePath() const { return file; }

@@ -14,12 +14,25 @@ Texture::Texture(const Texture& other) : id(other.id), w(other.w), h(other.h), f
 }
 
 Texture::Texture(const std::string& path) : file(path) {
+	load(path);
+}
+
+Texture::~Texture() {
+	if (id != 0) {
+		glDeleteTextures(1, &id);
+	}
+}
+
+void Texture::load(const std::string& path) {
 	int comp = 0;
 	unsigned char* flipped = nullptr;
 
 	{
 		unsigned char* data = nullptr;
 		data = stbi_load(path.c_str(), &w, &h, &comp, STBI_rgb_alpha);
+		//printf("path: %s\n", path.c_str());
+		//printf("data: %s\n", data);
+		//printf("comp: %i\n", comp);
 		flipped = new unsigned char[w * comp * h];
 		flipImage(data, w, h, comp, flipped);
 		stbi_image_free(data);
@@ -32,24 +45,19 @@ Texture::Texture(const std::string& path) : file(path) {
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
 	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, flipped));
+	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, flipped));
 
 	//stbi_image_free(data);
 	delete[] flipped;
-}
 
-Texture::~Texture() {
-	if (id != 0) {
-		glDeleteTextures(1, &id);
-	}
 }
 
 void Texture::bind(int index) const {
 	if (id != 0) {
 		GL_CALL(glActiveTexture(GL_TEXTURE0 + index));
-		GL_CALL(glBindTextureUnit(index, id));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, id));
 		//printf("texture bound at index : %i\n", index);
 	}
 }
