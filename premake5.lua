@@ -13,6 +13,7 @@ workspace "ComputerGraphics"
     IncludeDir["GLFW"]  = "vendor/glfw/include"
     IncludeDir["STB"]   = "vendor/stb"
     IncludeDir["GLM"]   = "vendor/glm"
+    IncludeDir["ASSIMP"] = "vendor/assimp/include"
 
 project "ComputerGraphics"
     location "ComputerGraphics"
@@ -47,17 +48,20 @@ project "ComputerGraphics"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.STB}",
 		"%{IncludeDir.GLM}",
+		"%{IncludeDir.ASSIMP}",
 	}
 
     libdirs {
         "vendor/glew/lib/Release/x64",
 		"vendor/glfw/lib-vc2022",
+        "vendor/assimp/lib"
     }
 
     links {
         "glew32s",
         "glfw3",
-        "opengl32.lib"
+        "opengl32.lib",
+        "assimp-vc143-mtd.lib",
     }
 
     filter "system:windows"
