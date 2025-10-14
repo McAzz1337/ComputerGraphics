@@ -93,6 +93,7 @@ int Shader::getUniform(const char* name) const {
 	return uniform;
 }
 
+
 void Shader::setUniformf1(const char* name, float x) const {
 
 	int uniform = getUniform(name);
