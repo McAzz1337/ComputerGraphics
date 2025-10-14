@@ -6,6 +6,8 @@
 
 #include "stb/stb_image.h"
 
+#include <filesystem>
+
 
 Texture::Texture() {}
 
@@ -26,10 +28,21 @@ Texture::~Texture() {
 void Texture::load(const std::string& path) {
 	int comp = 0;
 	unsigned char* flipped = nullptr;
+	std::filesystem::path absPath = std::filesystem::absolute(path);
+	std::cout << "Attempting to load texture from: " << absPath << std::endl;
+
+	// Check if file exists
+	if (!std::filesystem::exists(absPath)) {
+		std::cerr << "File does NOT exist!" << std::endl;
+	} else {
+		std::cout << "File exists." << std::endl;
+	}
 
 	{
 		unsigned char* data = nullptr;
-		data = stbi_load(path.c_str(), &w, &h, &comp, STBI_rgb_alpha);
+		data = stbi_load(absPath.generic_string().c_str(), &w, &h, &comp, STBI_rgb_alpha);
+		
+		assert(data);
 		//printf("path: %s\n", path.c_str());
 		//printf("data: %s\n", data);
 		//printf("comp: %i\n", comp);
@@ -47,7 +60,7 @@ void Texture::load(const std::string& path) {
 	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GL_CALL(glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, flipped));
+	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, flipped));
 
 	//stbi_image_free(data);
 	delete[] flipped;
