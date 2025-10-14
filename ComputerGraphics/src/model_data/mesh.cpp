@@ -32,10 +32,25 @@ void Mesh::assignTexture(const std::string& path) {
 	tex.load(path);
 }
 
-void Mesh::bind() const {
+void Mesh::assignTexture1(const std::string& path) {
+	tex1.load(path);
+}
+
+void Mesh::assignBumpMap(const std::string& path) {
+	bump.load(path);
+}
+
+void Mesh::assignMaterial(Material mat) {
+	this->mat = mat;
+}
+
+void Mesh::bind(Shader* shader) const {
 	vao.bind();
 	ibo.bind();
 	tex.bind();
+	tex1.bind(1);
+	//bump.bind(1);
+	//mat.bind(shader);
 }
 
 VertexBuffer& Mesh::getVbo() {
