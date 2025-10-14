@@ -5,9 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-KeymapEntry::KeymapEntry() {
-
-}
+KeymapEntry::KeymapEntry() : state(RELEASE), action([](float) { printf("null\n"); }), symbol('?') {}
 
 KeymapEntry::KeymapEntry(const KeymapEntry& other) {
 	this->symbol = other.symbol;
@@ -36,6 +34,7 @@ void KeymapEntry::operator=(const KeymapEntry& other) {
 
 Input::Input() {
 	releaseAllKeys();
+	releaseAllMouseButtons();
 }
 
 Input::~Input() {}
@@ -48,6 +47,10 @@ void Input::setOnMouseMove(std::function<void(float, float, float)> onMouseMove)
 	this->onMouseMove = onMouseMove;
 }
 
+void Input::setOnMouseMoveButtonLeft(std::function<void(float, float, float)> func) {
+	this->onMouseMoveMouseButtonLeft = func;
+}
+
 void Input::execute(float delta) {
 	for (auto& key : keys) {
 		if (key.state != RELEASE) {
@@ -55,7 +58,11 @@ void Input::execute(float delta) {
 		}
 	}
 	glm::vec2 mx = getMouseDelta();
-	onMouseMove(delta, mx.x, mx.y);
+	if (isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)) {
+		onMouseMoveMouseButtonLeft(delta, mx.x, mx.y);
+	} else {
+		onMouseMove(delta, mx.x, mx.y);
+	}
 }
 
 void Input::releaseAllKeys() {
@@ -64,6 +71,14 @@ void Input::releaseAllKeys() {
 		keys[i] = KeymapEntry((const char) i);
 	}
 }
+
+void Input::releaseAllMouseButtons() {
+	printf("released all mouse buttons\n");
+	for (int i = 0; i < MOUSE_BUTTON_COUNT; i++) {
+		mouseButtons[i] = RELEASE;
+	}
+}
+
 
 void Input::press(int key) {
 	printf("pressed: %c\n", (char) key);
@@ -92,18 +107,47 @@ bool Input::isHeld(int key) const {
 	return  keys[key].state == HOLD || keys[key].state == PRESS;
 }
 
+
+void Input::pressMouseButton(int button) {
+	if (button == GLFW_MOUSE_BUTTON_1) {
+		mouseClick = mousePos;
+	}
+	mouseButtons[button] = PRESS;
+}
+void  Input::releaseMouseButton(int button) {
+	mouseButtons[button] = RELEASE;
+}
+
+bool Input::isMouseButtonPressed(int button) const {
+	return mouseButtons[button] == PRESS;
+}
+
+bool Input::isMouseButtonReleased(int button) const {
+	return mouseButtons[button] == RELEASE;
+}
+
+
 void Input::moveMouse(const glm::vec2& v) {
-	mouseDelta = v - mousePos;
 	if (mouseReset.has_value()) {
+		lastMousePos = glm::vec2(0.0f);
 		mousePos = mouseReset.value();
 	} else {
-		mousePos = v;
+		if (v != mousePos) {
+			mouseDelta = v - mousePos;
+			lastMousePos = mousePos;
+			mousePos = v;
+		} else {
+			mouseDelta = glm::vec2(0.0f);
+		}
 	}
-	glfwSetCursorPos(window->getHandle(), (double) mousePos.x, (double) mousePos.y);
 }
 
 const glm::vec2& Input::getMousePos() const {
 	return mousePos;
+}
+
+const glm::vec2& Input::getMouseClick() const {
+	return mouseClick;
 }
 
 const glm::vec2& Input::getMouseDelta() const {
