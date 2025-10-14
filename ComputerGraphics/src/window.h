@@ -15,6 +15,7 @@ public:
 	void setKeyCallback(GLFWkeyfun func) const;
 	void setMouseCallback(GLFWmousebuttonfun func) const;
 	void setMousePositionCallback(GLFWcursorposfun func) const;
+	void setMouseButtonCallback(GLFWmousebuttonfun func) const;
 
 	void close() const;
 	bool shouldClose() const;
@@ -26,5 +27,13 @@ public:
 	
 	inline GLFWwindow* getHandle() const {
 		return handle;
+	}
+	
+	inline int getWidth() const {
+		return width;
+	}
+
+	inline int getHeight() const {
+		return height;
 	}
 };

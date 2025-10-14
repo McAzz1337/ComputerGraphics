@@ -28,7 +28,11 @@ void Window::setMouseCallback(GLFWmousebuttonfun func) const {
 }
 
 void Window::setMousePositionCallback(GLFWcursorposfun func) const {
-	glfwSetCursorPosCallback(handle,func);
+	glfwSetCursorPosCallback(handle, func);
+}
+
+void Window::setMouseButtonCallback(GLFWmousebuttonfun func) const {
+	glfwSetMouseButtonCallback(handle, func);
 }
 
 void Window::close() const {
