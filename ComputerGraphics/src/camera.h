@@ -44,5 +44,9 @@ public:
 		return view;
 	}
 
+	inline const glm::mat4 getView() const {
+		return (const glm::mat4) view.getMat();
+	}
+
 	void printView() const;
 };

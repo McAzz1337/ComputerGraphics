@@ -21,11 +21,11 @@ void Camera::setProjection(float fov, float aspect, float near, float far) {
 }
 
 void Camera::translate(const glm::vec3& t) {
-	
+
 	view.translate(t);
 }
 
-void Camera::rotate(const glm::vec3& r) {
+void Camera::rotate( const glm::vec3& r) {
 
 	view.rotate(r);
 }

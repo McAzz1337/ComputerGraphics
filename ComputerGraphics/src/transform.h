@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/vec3.hpp>
+#include <glm/mat3x3.hpp>
 #include <glm/mat4x4.hpp>
 
 class Transform {
@@ -9,16 +10,22 @@ class Transform {
 	glm::vec3 pos;
 	glm::vec3 rot;
 	glm::vec3 _scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::mat4 rotation = glm::mat4(1.0f);
 	glm::mat4 mat;
+	int mode = 0;
 
 public:
 	Transform();
 	~Transform();
 
+	inline void setMode(int mode) {
+		this->mode = mode;
+	}
 	void reset();
 
 	void translate(const glm::vec3& t);
 	void rotate(const glm::vec3& r);
+	void rotateAxis(float angle, const glm::vec3& axis);
 	void scale(const glm::vec3& s);
 
 	void update();
@@ -57,6 +64,10 @@ public:
 			update();
 		}
 		return (const glm::vec3) mat[3];
+	}
+	
+	inline const glm::mat3 getRotation() {
+		return (const glm::mat3) rotation;
 	}
 
 

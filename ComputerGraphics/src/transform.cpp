@@ -7,7 +7,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-constexpr float TAU = (float) std::numbers::pi * 2.0f;
+constexpr float TAU = std::numbers::pi * 2.0f;
 
 Transform::Transform() {
 
@@ -50,6 +50,16 @@ void Transform::rotate(const glm::vec3& r) {
 	dirty = true;
 }
 
+
+void Transform::rotateAxis(float angle, const glm::vec3& axis) {
+	//rotation = glm::rotate(rotation, angle, axis);
+	//rotation = glm::rotate(glm::mat4(1.0f), angle, axis) * rotation;
+	glm::mat4 rot = glm::rotate(glm::mat4(1.0f), angle, axis);
+	rotation = rot * rotation; // <?? multiply on the LEFT
+	dirty = true;
+}
+
+
 void Transform::scale(const glm::vec3& s) {
 
 	_scale += s;
@@ -60,13 +70,18 @@ void Transform::update() {
 
 	mat = glm::mat4(1.0f);
 
-	mat = glm::rotate(mat, rot.z, { 0.0f, 0.0f, 1.0f });
-	mat = glm::rotate(mat, rot.y, { 0.0f, 1.0f, 0.0f });
-	mat = glm::rotate(mat, rot.x, { 1.0f, 0.0f, 0.0f });
+	//mat = glm::rotate(mat, rot.z, { 0.0f, 0.0f, 1.0f });
+	//mat = glm::rotate(mat, rot.y, { 0.0f, 1.0f, 0.0f });
+	//mat = glm::rotate(mat, rot.x, { 1.0f, 0.0f, 0.0f });
 
 	//mat = glm::scale(mat, _scale);
 
-	mat = glm::translate(glm::mat4(1.0f), pos) * mat;
+	mat = glm::translate(pos) * rotation;
+	//rotation = glm::mat4(1.0f);
+	
+	rotation[0] = glm::normalize(rotation[0]);
+	rotation[1] = glm::normalize(rotation[1]);
+	rotation[2] = glm::normalize(rotation[2]);
 
 	dirty = false;
 }
