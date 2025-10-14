@@ -21,4 +21,4 @@
 	void writeFile(const std::string& path, const std::string& src);
 
 	void readOBJ(const std::string& path, std::vector<Vertex>& verticies, std::vector<uint32_t>& indicies, std::string& mtl);
-	void readMTL(const std::string& path, std::string& albedo);
+	void readMTL(const std::string& path, std::string& albedo, std::string& bump);

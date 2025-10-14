@@ -236,13 +236,15 @@ void readOBJ(const std::string& path, std::vector<Vertex>& verticies, std::vecto
 	}
 }
 
-void readMTL(const std::string& path, std::string& albedo) {
+void readMTL(const std::string& path, std::string& albedo, std::string& bump) {
 	std::vector<std::string> lines;
 	readFileSplit(path, lines);
 
 	for (const auto& line : lines) {
 		if (startsWith(line, "map_Kd")) {
 			 albedo = line.substr(strlen("map_Kd") + 1);
+		} else if (startsWith(line, "map_Bump")) {
+			bump = line.substr(strlen("map_Bump") + 1);
 		}
 	}
 }
