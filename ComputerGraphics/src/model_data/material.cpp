@@ -1,6 +1,12 @@
 #include "material.h"
 
+const glm::vec4 Material::DEFUALT_SPECULAR = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+const glm::vec4 Material::DEFUALT_DIFFUSE = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
+const glm::vec4 Material::DEFUALT_AMBIENT = glm::vec4(0.3f, 0.3f, 0.3f, 1.0f);
 
+const float Material::DEFAULT_ROUGNESS = 0.5f;
+const float Material::DEFAULT_SPECULAR_STRENGTH = 0.3f;
+const float Material::DEFAULT_METALLIC = 0.0f;
 
 Material::Material() {
 
@@ -43,4 +49,20 @@ void Material::bind(Shader* shader) const {
 	shader->setUniformf1("specularStrength", specularStrength);
 	shader->setUniformf1("metallic", metallic);
 
+}
+
+void Material::fromValues(Material& mat,
+							const glm::vec4 specular,
+							const glm::vec4 diffuse,
+							const glm::vec4 ambient,
+							const float roughness,
+							const float specularStrength,
+							const float metallic) {
+
+	mat.specular = specular == glm::vec4(0.0f) ?  DEFUALT_SPECULAR : specular;
+	mat.diffuse = diffuse == glm::vec4(0.0f) ?  DEFUALT_DIFFUSE : diffuse;
+	mat.ambient = ambient == glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) ?  DEFUALT_AMBIENT : ambient;
+	mat.roughness = roughness < 0.0f ? DEFAULT_ROUGNESS: roughness;
+	mat.specularStrength = specularStrength < 0.0f ? DEFAULT_SPECULAR_STRENGTH: specularStrength;
+	mat.metallic = metallic < 0.0f ? DEFAULT_METALLIC: metallic;
 }
