@@ -9,7 +9,8 @@
 class Camera {
 
 	glm::mat4 projection;
-	mutable Transform view;
+	//mutable Transform view;
+	glm::mat4 view;
 	glm::vec3 resetPos = glm::vec3(0.0f);
 	glm::vec3 resetRot = glm::vec3(0.0f);
 
@@ -35,18 +36,37 @@ public:
 	}
 
 	inline const glm::mat4 getProjectionView() const {
-		
-		return projection * glm::inverse((const glm::mat4&)view);
+		//return projection * glm::inverse((const glm::mat4&) view);
+		return projection * view;
 	}
 
+	/*
 	inline Transform& getTransform() {
+		return view;
+	}
+	*/
 
+	inline const glm::mat4 getView() const {
+		//return (const glm::mat4) view.getMat();
 		return view;
 	}
 
-	inline const glm::mat4 getView() const {
-		return (const glm::mat4) view.getMat();
+	inline const glm::vec3 getPos() const {
+		return (const glm::vec3) view[3];
 	}
 
-	void printView() const;
+	inline const glm::vec3 forward() {
+		glm::mat4 inv = glm::inverse(view);
+		return (const glm::vec3) inv [2];
+	}
+
+	inline const glm::vec3 up() {
+		glm::mat4 inv = glm::inverse(view);
+		return (const glm::vec3) inv[1];
+	}
+
+	inline const glm::vec3 right() {
+		glm::mat4 inv = glm::inverse(view);
+		return (const glm::vec3) inv[0];
+	}
 };

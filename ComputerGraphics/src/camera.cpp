@@ -21,22 +21,23 @@ void Camera::setProjection(float fov, float aspect, float near, float far) {
 }
 
 void Camera::translate(const glm::vec3& t) {
-
-	view.translate(t);
+	//view.translate(t);
+	view = glm::translate(view, t);
 }
 
-void Camera::rotate( const glm::vec3& r) {
-
-	view.rotate(r);
+void Camera::rotate(const glm::vec3& r) {
+	//view.rotate(r);
+	view = glm::rotate(view, r.z, forward());
+	view = glm::rotate(view, r.y, up());
+	view = glm::rotate(view, r.x, right());
 }
 
 void Camera::reset() {
-	view.reset();
-	view.translate(resetPos);
-	view.rotate(resetRot);
+	//view.reset();
+	view = glm::mat4(1.0f);
+	//view.translate(resetPos);
+	translate(resetPos);
+	//view.rotate(resetRot);
+	rotate(resetRot);
 }
 
-void Camera::printView() const {
-
-	view.print();
-}
