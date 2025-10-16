@@ -91,13 +91,18 @@ namespace assetimporter {
 			aiGetMaterialFloat(mat, AI_MATKEY_ROUGHNESS_FACTOR, &roughness);
 			aiGetMaterialFloat(mat, AI_MATKEY_METALLIC_FACTOR, &metallic);
 
+			auto spec = glm::vec4(specular.r, specular.g, specular.b, specular.a);
+			auto diff = glm::vec4(diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+			auto amb = glm::vec4(ambient.r, ambient.g, ambient.b, ambient.a);
+			Material::fromValues(material, spec, diff, amb, specularStrength, roughness, metallic);
+			/*
 			material = Material(
 				{ specular.r, specular.g, specular.b, shininess },
 				{ diffuse.r, diffuse.g, diffuse.b, diffuse.a },
 				{ ambient.r, ambient.g, ambient.b, ambient.a },
 				roughness, specularStrength, metallic
 			);
-
+			*/
 			// Scheitelpunktinformationen laden
 			for (uint32_t j = 0; j < mesh->mNumVertices; j++) {
 

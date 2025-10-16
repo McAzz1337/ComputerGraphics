@@ -40,22 +40,20 @@ class Input {
 	static const int MOUSE_BUTTON_COUNT = 3;
 	KeyState mouseButtons[MOUSE_BUTTON_COUNT];
 	glm::vec2 mousePos;
-	glm::vec2 lastMousePos;
-	glm::vec2 mouseClick;
 	glm::vec2 mouseDelta = glm::vec2(0.0f, 0.0f);
 	std::optional<glm::ivec2> mouseReset;
 	std::function<void(float, float, float)> onMouseMove;
-	std::function<void(float, float, float)> onMouseMoveMouseButtonLeft;
 
 	Window* window = nullptr;
 
 public:
 	Input();
 	~Input();
+	
+	void init(Window* window);
 
 	void setAction(int key, std::function<void(float)> action);
 	void setOnMouseMove(std::function<void(float, float, float)> onMouseMove);
-	void setOnMouseMoveButtonLeft(std::function<void(float, float, float)> func);
 	void execute(float delta);
 
 	void releaseAllKeys();
@@ -78,7 +76,6 @@ public:
 	void moveMouse(const glm::vec2& v);
 
 	const glm::vec2& getMousePos() const;
-	const glm::vec2& getMouseClick() const;
 	const glm::vec2& getMouseDelta() const;
 
 	void clearMouseDelta();
@@ -91,14 +88,5 @@ public:
 	inline void setMouseReset(const glm::ivec2& v) {
 
 		mouseReset = { v };
-	}
-
-	inline void setWindow(Window* window) {
-
-		this->window = window;
-	}
-	
-	inline const glm::vec2 getLastMousePos() const {
-		return lastMousePos;
 	}
 };
