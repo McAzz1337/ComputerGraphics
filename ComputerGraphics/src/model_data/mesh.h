@@ -1,11 +1,14 @@
 #pragma once
 #include "vertexArray.h"
+
+
 #include "texture.h"
 #include  "../shader.h"
 #include "material.h"
 
 
 class Mesh {
+
 	VertexArray vao;
 	IndexBuffer ibo;
 	Material mat;
@@ -24,6 +27,7 @@ public:
 
 	void bind(const glm::mat4& projectionView) const;
 
+	inline Material& getMaterial() { return mat;  }
 	VertexBuffer& getVbo();
 	IndexBuffer& getIbo();
 };
