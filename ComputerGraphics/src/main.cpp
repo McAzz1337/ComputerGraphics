@@ -22,6 +22,7 @@
 #include "transform.h"
 #include "model_data/texture.h"
 #include "window.h"
+#include "creation.h"
 
 
 void printMat(const glm::mat4& mat, const char* name = "mat") {
@@ -54,50 +55,11 @@ static void mouseButtonCallback(GLFWwindow* window, int button, int action, int 
 	}
 }
 
-static void createPlane(std::vector<Vertex>& verteces, std::vector<uint32_t>& indices, float size, const glm::mat4& transform) {
-	float side = size * 0.5f;
-	glm::mat3 rot = (glm::mat3) transform;
-	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(-side, -side, 0.0f, 1.0f)), { 0.0f, 0.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
-	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(side, -side, 0.0f, 1.0f)), { 1.0f, 0.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
-	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(side, side, 0.0f, 1.0f)), { 1.0f, 1.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
-	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(-side, side, 0.0f, 1.0f)), { 0.0f, 1.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
-
-	indices.push_back(0);
-	indices.push_back(1);
-	indices.push_back(2);
-	indices.push_back(0);
-	indices.push_back(2);
-	indices.push_back(3);
-}
-
-static void createCube(std::vector<Vertex>& verteces, std::vector<uint32_t>& indices, float size, const glm::mat4& transform) {
-	float side = size * 0.5f;
-	float angle90 = (float) std::numbers::pi * 0.5f;
-	float angle180 = (float) std::numbers::pi;
-	float angle125 = (float) std::numbers::pi * 1.5f;
-	glm::mat4 up = glm::rotate(glm::translate(transform, Transform::globalUp() * side), angle125, Transform::globalRight());
-	glm::mat4 down = glm::rotate(glm::translate(transform, -Transform::globalUp() * side), angle90, Transform::globalRight());
-	glm::mat4 right = glm::rotate(glm::translate(transform, Transform::globalRight() * side), angle90, Transform::globalUp());
-	glm::mat4 left = glm::rotate(glm::translate(transform, -Transform::globalRight() * side), angle125, Transform::globalUp());
-	glm::mat4 front = glm::translate(transform, Transform::globalForward() * side);
-	glm::mat4 back = glm::rotate(glm::translate(transform, -Transform::globalForward() * side), angle180, Transform::globalUp());
 
 
-	auto create = [&verteces, &indices, &size](const glm::mat4& transform, uint32_t offset) {
-		std::vector<uint32_t> temp;
-		createPlane(verteces, temp, size, transform);
-		for (int j = 0; j < temp.size(); j++) { temp[j] += 4 * offset; }
-		indices.insert(indices.end(), temp.begin(), temp.end());
-		};
 
-	create(front, 0);
-	create(up, 1);
-	create(back, 2);
-	create(down, 3);
-	create(left, 4);
-	create(right, 5);
-
-}
+int meshIndex = 3;
+std::vector<Mesh> meshes;
 
 int main() {
 
@@ -114,6 +76,14 @@ int main() {
 
 #pragma region INPUT
 	input.init(&window);
+	input.setAction(GLFW_KEY_RIGHT, [](float) {
+		meshIndex = ++meshIndex % meshes.size();
+		input.release(GLFW_KEY_RIGHT);
+					});
+	input.setAction(GLFW_KEY_LEFT, [](float) { 
+		meshIndex = --meshIndex % meshes.size();
+		input.release(GLFW_KEY_LEFT);
+					});
 	input.setAction(GLFW_KEY_W, [&cam](float delta) { cam.translate(cam.forward() * delta); });
 	input.setAction(GLFW_KEY_S, [&cam](float delta) { cam.translate(-cam.forward() * delta); });
 	input.setAction(GLFW_KEY_A, [&cam](float delta) { cam.translate(-cam.right() * delta); });
@@ -146,45 +116,6 @@ int main() {
 		float resolution[2] = { 640.0f, 640.0f };
 		rayTracingShader.setUniform2f("resolution", resolution);
 	}
-#pragma region MESH
-	{
-		std::vector<Vertex> verticies;
-		std::vector<uint32_t> indicies;
-		Material material;
-		assetimporter::loadModel("models/sphere", "sphere.obj", verticies, indicies, material);
-		//assetimporter::loadModel("models", "die.obj", verticies, indicies, textures, material);
-		VertexBuffer vbo(verticies.data(), verticies.size());
-		uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
-		IndexBuffer ibo(indicies.data(), indicies.size());
-		mesh.assignBuffers(vbo, ibo);
-		mesh.assignMaterial(material);
-	}
-	/*
-	{
-		std::vector<Vertex> verteces;
-		std::vector<uint32_t> indices;
-		createPlane(verteces, indices, 1.0f, glm::rotate(glm::mat4(1.0f), (float) std::numbers::pi / 2.0f, { 1.0f, 0.0f, 0.0f}));
-		VertexBuffer vbo(verteces.data(), verteces.size());
-		IndexBuffer ibo(indices.data(), indices.size());
-		plane.assignBuffers(vbo, ibo);
-		Material mat;
-		mat.assignShader(&fractalShader);
-		plane.assignMaterial(mat);
-	}
-	*/
-	{
-		std::vector<Vertex> verteces;
-		std::vector<uint32_t> indices;
-		createCube(verteces, indices, 1.0f, glm::mat4(1.0f));
-		VertexBuffer vbo(verteces.data(), verteces.size());
-		IndexBuffer ibo(indices.data(), indices.size());
-		cube.assignBuffers(vbo, ibo);
-		Material mat;
-		//mat.assignShader(&fractalShader);
-		mat.assignShader(&rayTracingShader);
-		cube.assignMaterial(mat);
-	}
-#pragma endregion
 
 	glm::mat4 trans1;
 	glm::mat4 trans2;
@@ -205,6 +136,7 @@ int main() {
 	std::chrono::time_point last = std::chrono::steady_clock::now();
 	float elapsed = 0.0f;
 
+	createMeshes(meshes);
 	while (window.shouldClose()) {
 		std::chrono::time_point now = std::chrono::steady_clock::now();
 		float delta = std::chrono::duration<float, std::milli>(now - last).count() / 1000.0f;
@@ -221,19 +153,22 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 pv = cam.getProjectionView();
-		mesh.bind(pv);
-		//GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
-
-		cube.bind(pv * trans1);
+/*
 		fractalShader.setUniformf1("time", elapsed);
-		rayTracingShader.setUniformf1("time", elapsed);
-		rayTracingShader.setUniformi1("type", 2);
-		glm::mat3 view = glm::mat3(cam.getView());
 		rayTracingShader.setMatrix3("viewMat", view);
-		//fractalShader.setMatrix3("viewMat", view);
-		GL_CALL(glDrawElements(GL_TRIANGLES, cube.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
-
+		fractalShader.setMatrix3("viewMat", view);
+*/
+		Mesh& mesh = meshes[meshIndex];
+		Shader& shader = mesh.getMaterial().getShader();
+		shader.setUniformf1("time", elapsed);
+		shader.setUniformi1("type", 2);
+		glm::mat3 view = glm::mat3(cam.getView());
+		shader.setMatrix3("viewMat", view);
+		float resolution[2] = { 640.0f, 640.0f };
+		shader.setUniform2f("resolution", resolution);
+		mesh.bind(pv * trans1);
+		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
 		window.swapBuffers();
 	}
