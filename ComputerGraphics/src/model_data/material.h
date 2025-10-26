@@ -1,7 +1,9 @@
 #pragma once
+#include <variant>
 
 #include <glm/vec4.hpp>
 #include <optional>
+#include <unordered_map>
 #include "shader.h"
 #include "texture.h"
 #include "../io/assetImporter.h"
@@ -32,7 +34,7 @@ private:
 	Texture* bumpMap = nullptr;
 	Texture* normalMap = nullptr;
 
-	Shader* shader = nullptr;
+	Shader shader;
 
 
 
@@ -50,15 +52,16 @@ public:
 
 	void bind(const glm::mat4& projectionView) const;
 	void assignAssets(std::unordered_map<assetimporter::AssetType, std::string> assets);
-	void assignShader(Shader* shader);
+	void assignShader(Shader shader);
 
+	inline Shader& getShader() { return shader;  }
 
 	static void fromValues(Material& mat,
-							const glm::vec4 specular,
-							const glm::vec4 diffuse,
-							const glm::vec4 ambient,
-							const float roughness,
-							const float specularStrength,
-							const float metallic);
+						   const glm::vec4 specular,
+						   const glm::vec4 diffuse,
+						   const glm::vec4 ambient,
+						   const float roughness,
+						   const float specularStrength,
+						   const float metallic);
 
 };
