@@ -3,6 +3,8 @@
 #include <glm/vec4.hpp>
 #include <optional>
 #include "shader.h"
+#include "texture.h"
+#include "../io/assetImporter.h"
 
 
 struct Material {
@@ -25,6 +27,15 @@ private:
 	float roughness = 0.0f;
 	float metallic = 0.0f;
 
+	Texture* tex = nullptr;
+	Texture* tex1 = nullptr;
+	Texture* bumpMap = nullptr;
+	Texture* normalMap = nullptr;
+
+	Shader* shader = nullptr;
+
+
+
 public:
 	Material();
 	Material(const Material& m);
@@ -35,10 +46,11 @@ public:
 			 float specularStength,
 			 float metallic);
 
-
 	~Material();
 
-	void bind(Shader* shader) const;
+	void bind(const glm::mat4& projectionView) const;
+	void assignAssets(std::unordered_map<assetimporter::AssetType, std::string> assets);
+	void assignShader(Shader* shader);
 
 
 	static void fromValues(Material& mat,
