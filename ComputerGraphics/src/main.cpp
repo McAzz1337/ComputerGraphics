@@ -20,7 +20,7 @@
 #include "model_data/mesh.h"
 #include "shader.h"
 #include "transform.h"
-#include "texture.h"
+#include "model_data/texture.h"
 #include "window.h"
 
 
@@ -54,9 +54,54 @@ static void mouseButtonCallback(GLFWwindow* window, int button, int action, int 
 	}
 }
 
+static void createPlane(std::vector<Vertex>& verteces, std::vector<uint32_t>& indices, float size, const glm::mat4& transform) {
+	float side = size * 0.5f;
+	glm::mat3 rot = (glm::mat3) transform;
+	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(-side, -side, 0.0f, 1.0f)), { 0.0f, 0.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
+	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(side, -side, 0.0f, 1.0f)), { 1.0f, 0.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
+	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(side, side, 0.0f, 1.0f)), { 1.0f, 1.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
+	verteces.push_back(Vertex(glm::vec3(transform * glm::vec4(-side, side, 0.0f, 1.0f)), { 0.0f, 1.0f }, rot * glm::vec3(0.0f, 0.0f, 1.0f)));
+
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(0);
+	indices.push_back(2);
+	indices.push_back(3);
+}
+
+static void createCube(std::vector<Vertex>& verteces, std::vector<uint32_t>& indices, float size, const glm::mat4& transform) {
+	float side = size * 0.5f;
+	float angle90 = (float) std::numbers::pi * 0.5f;
+	float angle180 = (float) std::numbers::pi;
+	float angle125 = (float) std::numbers::pi * 1.5f;
+	glm::mat4 up = glm::rotate(glm::translate(transform, Transform::globalUp() * side), angle125, Transform::globalRight());
+	glm::mat4 down = glm::rotate(glm::translate(transform, -Transform::globalUp() * side), angle90, Transform::globalRight());
+	glm::mat4 right = glm::rotate(glm::translate(transform, Transform::globalRight() * side), angle90, Transform::globalUp());
+	glm::mat4 left = glm::rotate(glm::translate(transform, -Transform::globalRight() * side), angle125, Transform::globalUp());
+	glm::mat4 front = glm::translate(transform, Transform::globalForward() * side);
+	glm::mat4 back = glm::rotate(glm::translate(transform, -Transform::globalForward() * side), angle180, Transform::globalUp());
+
+
+	auto create = [&verteces, &indices, &size](const glm::mat4& transform, uint32_t offset) {
+		std::vector<uint32_t> temp;
+		createPlane(verteces, temp, size, transform);
+		for (int j = 0; j < temp.size(); j++) { temp[j] += 4 * offset; }
+		indices.insert(indices.end(), temp.begin(), temp.end());
+		};
+
+	create(front, 0);
+	create(up, 1);
+	create(back, 2);
+	create(down, 3);
+	create(left, 4);
+	create(right, 5);
+
+}
 
 int main() {
 
+	assetimporter::init();
 	Window window("ComputerGraphics", 1440, 1080);
 	window.setKeyCallback(keyCallback);
 	window.setMousePositionCallback(cursorPosCallback);
@@ -93,30 +138,56 @@ int main() {
 #pragma endregion 
 
 	Mesh mesh;
+	Mesh plane;
+	Mesh cube;
+	Shader fractalShader("shaders/fractal_shader");
+	Shader rayTracingShader("shaders/ray_tracer");
+	{
+		float resolution[2] = { 640.0f, 640.0f };
+		rayTracingShader.setUniform2f("resolution", resolution);
+	}
 #pragma region MESH
 	{
 		std::vector<Vertex> verticies;
 		std::vector<uint32_t> indicies;
-		std::vector<std::string> textures;
 		Material material;
-		assetimporter::loadModel("models", "die.obj", verticies, indicies, textures, material);
+		assetimporter::loadModel("models/sphere", "sphere.obj", verticies, indicies, material);
+		//assetimporter::loadModel("models", "die.obj", verticies, indicies, textures, material);
 		VertexBuffer vbo(verticies.data(), verticies.size());
 		uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
 		IndexBuffer ibo(indicies.data(), indicies.size());
 		mesh.assignBuffers(vbo, ibo);
-		mesh.assignTexture(textures[0]);
-		mesh.assignTexture1(textures[1]);
 		mesh.assignMaterial(material);
-		mesh.bind(bumpShader);
+	}
+	/*
+	{
+		std::vector<Vertex> verteces;
+		std::vector<uint32_t> indices;
+		createPlane(verteces, indices, 1.0f, glm::rotate(glm::mat4(1.0f), (float) std::numbers::pi / 2.0f, { 1.0f, 0.0f, 0.0f}));
+		VertexBuffer vbo(verteces.data(), verteces.size());
+		IndexBuffer ibo(indices.data(), indices.size());
+		plane.assignBuffers(vbo, ibo);
+		Material mat;
+		mat.assignShader(&fractalShader);
+		plane.assignMaterial(mat);
+	}
+	*/
+	{
+		std::vector<Vertex> verteces;
+		std::vector<uint32_t> indices;
+		createCube(verteces, indices, 1.0f, glm::mat4(1.0f));
+		VertexBuffer vbo(verteces.data(), verteces.size());
+		IndexBuffer ibo(indices.data(), indices.size());
+		cube.assignBuffers(vbo, ibo);
+		Material mat;
+		//mat.assignShader(&fractalShader);
+		mat.assignShader(&rayTracingShader);
+		cube.assignMaterial(mat);
 	}
 #pragma endregion
 
 	glm::mat4 trans1;
 	glm::mat4 trans2;
-	//input.setAction(GLFW_KEY_UP, [&trans2](float delta) { trans2.translate(Transform::globalUp() * delta); });
-	//input.setAction(GLFW_KEY_DOWN, [&trans2](float delta) { trans2.translate(-Transform::globalUp() * delta); });
-	//input.setAction(GLFW_KEY_RIGHT, [&trans2](float delta) { trans2.translate(Transform::globalRight() * delta); });
-	//input.setAction(GLFW_KEY_LEFT, [&trans2](float delta) { trans2.translate(-Transform::globalRight() * delta); });
 
 	textureShader->bind();
 	float scrollTime = 10.0f;
@@ -124,16 +195,21 @@ int main() {
 
 #pragma region GL_SETTINGS
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
+	glCullFace(GL_BACK);
 	glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 #pragma endregion
 
 	std::chrono::time_point last = std::chrono::steady_clock::now();
+	float elapsed = 0.0f;
 
 	while (window.shouldClose()) {
 		std::chrono::time_point now = std::chrono::steady_clock::now();
 		float delta = std::chrono::duration<float, std::milli>(now - last).count() / 1000.0f;
 		scrollElapsed += delta;
+		elapsed += delta;
 		if (scrollElapsed / scrollTime > std::numbers::pi) {
 			scrollElapsed = 0.0f;
 		}
@@ -145,26 +221,19 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 pv = cam.getProjectionView();
-		simpleShader->bind();
-		simpleShader->setMatrix4("mvp", pv);// *trans2.getMat());
-		//textureShader->bind();
-		//textureShader->setMatrix4("mvp", pv * trans2.getMat());
-		//bumpShader->bind();
-		//bumpShader->setUniformf3("cameraPos ", cam.getTransform().getPos());
-		//bumpShader->setMatrix4("mvp", pv * trans2.getMat());
-		//bumpShader->setMatrix4("model", trans2.getMat());
-		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+		mesh.bind(pv);
+		//GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
-		textureShader->bind();
-		float sin = std::sin(scrollElapsed);
-		float cos = std::cos(scrollElapsed);
-		trans1 = glm::translate(trans1, glm::vec3(-cos, sin, 0.0f) * 0.35f);
-		trans1 = glm::translate(trans1, glm::vec3(2.5f, 0.0f, 0.0f));
-		textureShader->setUniformf1("scrollX", sin);
-		textureShader->setUniformf1("scrollY", cos);
-		textureShader->setMatrix4("mvp", pv * trans1);
-		trans1= glm::mat4(1.0f);
-		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+
+		cube.bind(pv * trans1);
+		fractalShader.setUniformf1("time", elapsed);
+		rayTracingShader.setUniformf1("time", elapsed);
+		rayTracingShader.setUniformi1("type", 2);
+		glm::mat3 view = glm::mat3(cam.getView());
+		rayTracingShader.setMatrix3("viewMat", view);
+		//fractalShader.setMatrix3("viewMat", view);
+		GL_CALL(glDrawElements(GL_TRIANGLES, cube.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+
 
 		window.swapBuffers();
 	}
