@@ -21,6 +21,8 @@ private:
 public:
 	Shader();
 	Shader(uint32_t id);
+	Shader(const std::string& file);
+	Shader(const Shader& other);
 	~Shader();
 
 	void load(const std::string& file);

@@ -27,13 +27,19 @@ Shader::Shader() {
 }
 
 
-Shader::Shader(uint32_t id) : id(id), file(file), uniforms(uniforms)  {
+Shader::Shader(uint32_t id) : id(id), file(file), uniforms(uniforms) {
 
 }
 
-
-Shader::~Shader() {
+Shader::Shader(const std::string& file) {
+	load(file);
 }
+
+Shader::Shader(const Shader& other) : id(other.id), file(other.file), uniforms(other.uniforms) {
+
+}
+
+Shader::~Shader() {}
 
 void Shader::load(const std::string& file) {
 
@@ -65,7 +71,7 @@ void Shader::load(const std::string& file) {
 
 	setUniformi1("tex", 0);
 
-	 shaders.emplace(std::make_pair(file, *this));
+	shaders.emplace(std::make_pair(file, *this));
 }
 
 void Shader::free() {
