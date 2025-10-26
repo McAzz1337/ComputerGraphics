@@ -7,19 +7,28 @@
 
 #include "../model_data/material.h"
 #include "../model_data/vertex.h"
-#include "../texture.h"
+#include "../model_data/texture.h"
 #include "fileio.h"
 
 #include <vector>
+#include <unordered_map>
 #include <iostream>
 
-#define DIR "res/models/"
+#define MODEL_DIR "models/"
+#define SHADER_DIR "shaders/"
 
 namespace assetimporter {
 
+	std::unordered_map<std::string, AssetType> textureLiterals;
+	AssetType convertTextureType(aiTextureType* assimpTextureType, std::string* customTextureType);
+
+	void init() {
+		textureLiterals.insert(std::make_pair("diffuse", AssetType::DIFFUSE1));
+		textureLiterals.insert(std::make_pair("shader", AssetType::SHADER));
+	}
 
 	// Stellt sicher, dass der Dateipfad der Texturen richitg ist
-	std::string checkTexturePath(const std::string& aPath, const std::string& dir) {
+	std::string checkTexturePath(const std::string& aPath,  const std::string& dir) {
 
 		printf("Looking at: %s\n", aPath.c_str());
 		int start = aPath.find_last_of('\\');
@@ -52,11 +61,11 @@ namespace assetimporter {
 				   const std::string& file,
 				   std::vector<Vertex>& vertices,
 				   std::vector<uint32_t>& indices,
-				   std::vector<std::string>& textures,
 				   Material& material) {
 
 		std::string fullPath = dir + "/" + file;
 		const aiScene* scene = aiImportFile(fullPath.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+		std::unordered_map<AssetType, std::string> assets;
 
 		if (!scene) {
 			printf("Failed to load View Model: %s\n", fullPath.c_str());
@@ -166,7 +175,10 @@ namespace assetimporter {
 					for (int i = 0; i < AI_TEXTURE_TYPE_MAX; i++) {
 						if (pMaterial->GetTexture((aiTextureType) i, 0, &path) == AI_SUCCESS) {
 							printf("Found: %s/%s for %i\n", dir.c_str(), path.C_Str(), i);
-							textures.push_back(checkTexturePath(path.C_Str(), dir));
+							auto type = (aiTextureType) i;
+							auto conv = convertTextureType(&type, nullptr);
+							assets.insert(std::make_pair(convertTextureType(&type, nullptr), checkTexturePath(path.C_Str(), dir)));
+							//textures.push_back(checkTexturePath(path.C_Str(), dir));
 						}
 					}
 				}
@@ -185,8 +197,36 @@ namespace assetimporter {
 			readFileSplit(dir + "/" + addFile, additional, true);
 			std::cout << "additionals found: " << additional.size() << std::endl;
 			for (auto& f : additional) {
-				printf("pushed back : %s\n", f.c_str());
-				textures.push_back(dir + "/" + f);
+				std::string type = f.substr(0, f.find(" "));
+				std::string path = f.substr(type.length() + 1);
+				std::string directory = dir;
+				if (type == "shader") {
+					directory = "shaders";
+				}
+				printf("pushed back type: %s path: %s\n", type.c_str(), path.c_str());
+				assets.insert(std::make_pair(convertTextureType(nullptr, &type), checkTexturePath(path, directory)));
+				//textures.push_back(dir + "/" + f);
+			}
+		}
+
+		material.assignAssets(assets);
+	}
+
+
+	AssetType convertTextureType(aiTextureType* assimpTextureType, std::string* customTextureType) {
+		assert(assimpTextureType || customTextureType && !(assimpTextureType && customTextureType));
+		if (assimpTextureType) {
+			switch (*assimpTextureType) {
+				case aiTextureType_DIFFUSE: return AssetType::DIFFUSE0; break;
+				case aiTextureType_HEIGHT: return AssetType::BUMP_MAP; break;
+				default: printf("Did not find aiTextureType: %i in customTextureTypes\n", (int) assimpTextureType);
+			}
+		} else {
+			auto it = textureLiterals.find(*customTextureType);
+			if (it != textureLiterals.end()) {
+				return it->second;
+			} else {
+				assert(false);
 			}
 		}
 	}

@@ -3,10 +3,15 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "gldebug.h"
+#include <unordered_map>
 
 #include "stb/stb_image.h"
 
 #include <filesystem>
+
+
+std::unordered_map<std::string, Texture> textureCache;
+
 
 
 Texture::Texture() {}
@@ -19,7 +24,9 @@ Texture::Texture(const std::string& path) : file(path) {
 	load(path);
 }
 
-Texture::~Texture() {
+Texture::~Texture() {}
+
+void Texture::unload() {
 	if (id != 0) {
 		glDeleteTextures(1, &id);
 	}
@@ -41,7 +48,7 @@ void Texture::load(const std::string& path) {
 	{
 		unsigned char* data = nullptr;
 		data = stbi_load(absPath.generic_string().c_str(), &w, &h, &comp, STBI_rgb_alpha);
-		
+
 		assert(data);
 		//printf("path: %s\n", path.c_str());
 		//printf("data: %s\n", data);
@@ -102,6 +109,17 @@ Texture Texture::createEmptyTexture(int width, int height) {
 	delete[] data;
 
 	return tex;
+}
+
+Texture* Texture::loadFromFile(const std::string& path) {
+	auto it = textureCache.find(path);
+	if (it != textureCache.end()) {
+		return &it->second;
+	} else {
+		Texture t(path);
+		textureCache.emplace(std::make_pair(path, t));
+		return &textureCache[path];
+	}
 }
 
 

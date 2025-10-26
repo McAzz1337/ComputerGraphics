@@ -18,12 +18,16 @@ public:
 	Texture(const std::string& path);
 	~Texture();
 
+	void unload();
+
 	void load(const std::string& path);
 	void bind(int index = 0) const;
 
 	inline const std::string& getFilePath() const { return file; }
 	inline uint32_t getId() const { return id; }
 	inline glm::vec2 getSize() const { return glm::vec2((float) w, (float) h); }
+
+	static Texture* loadFromFile(const std::string& path);
 
 	static Texture createEmptyTexture(int width, int height);
 	static Texture createTextureFromData(const unsigned char* data, int width, int height);
