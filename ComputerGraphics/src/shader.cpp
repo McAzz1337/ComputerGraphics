@@ -52,8 +52,8 @@ void Shader::load(const std::string& file) {
 	readFile((file + VS_EXT).c_str(), vsrc, true);
 	readFile((file + FS_EXT).c_str(), fsrc, true);
 
-	printf("%s Vertex Shader source:\n %s\n\n", fileName.c_str(), vsrc.c_str());
-	printf("%s Fragment Shader source:\n %s\n\n", fileName.c_str(), fsrc.c_str());
+	//printf("%s Vertex Shader source:\n %s\n\n", fileName.c_str(), vsrc.c_str());
+	//printf("%s Fragment Shader source:\n %s\n\n", fileName.c_str(), fsrc.c_str());
 
 	uint32_t vs;
 	uint32_t fs;
