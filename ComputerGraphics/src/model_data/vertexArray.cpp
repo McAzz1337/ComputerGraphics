@@ -5,6 +5,9 @@
 VertexArray::VertexArray() {
 	glGenVertexArrays(1, &handle);
 }
+VertexArray::VertexArray(const VertexArray& other) : handle(other.handle), vbo(other.vbo) {
+
+}
 
 VertexArray::VertexArray(VertexBuffer vbo) {
 

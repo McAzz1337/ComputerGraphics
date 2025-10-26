@@ -8,6 +8,7 @@ class VertexArray {
 
 public:
 	VertexArray();
+	VertexArray(const VertexArray& other);
 	VertexArray(VertexBuffer vbo);
 	~VertexArray();
 
