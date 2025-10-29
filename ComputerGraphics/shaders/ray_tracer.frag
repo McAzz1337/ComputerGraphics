@@ -13,6 +13,7 @@ out vec4 color;
 const float AMBIENT  = 0.3;
 vec3 bg = vec3(0.1, 0.1, 0.3);
 vec3 black = vec3(0.0);
+vec3 white = vec3(1.0);
 vec3 red = vec3(1.0, 0.0, 0.0);
 vec3 green = vec3(0.0, 1.0, 0.0);
 vec3 blue = vec3(0.0, 0.0, 1.0);
@@ -26,7 +27,7 @@ struct Material {
     float shininess;
 };
 
-Material materials[5];
+Material materials[6];
 
 void createMaterials() {
     //ruby
@@ -39,6 +40,12 @@ void createMaterials() {
    materials[3] = Material(vec3(0.0215, 0.1745, 0.0215), vec3(0.07568, 0.61424, 0.07568), vec3(0.633, 0.727811, 0.633), 0.6);
    //jade
    materials[4] = Material(vec3(0.135, 0.2225, 0.1575), vec3(0.54, 0.89, 0.63), vec3(0.316228, 0.316228, 0.316228),	0.1);
+   //silver
+   materials[5] = Material(vec3(0.19225, 0.19225, 0.19225), vec3(0.50754, 0.50754, 0.50754), vec3(0.508273, 0.508273, 0.508273), 0.4);
+}
+
+Material getMaterial(int index) {
+    return materials[index];
 }
 
 
@@ -86,7 +93,7 @@ struct Sphere {
     vec3 center;
     float radius;
     vec3 color;
-    float gloss;
+    int materialIdx;
 };
 
 struct Hit {
@@ -96,7 +103,7 @@ struct Hit {
     vec3 incidence;
     vec3 norm;
     vec3 color;
-    float gloss;
+    int materialIdx;
 };
 
 Hit newHit() {
@@ -119,7 +126,7 @@ Hit hit_sphere(Sphere s, Ray ray) {
         float l = neg < 1e-6 ? pos : neg;
         vec3 q = ray.origin + l * ray.dir;
         vec3 norm = normalize(q - s.center);
-        return  Hit(true, q, l, ray.dir, norm, s.color, s.gloss);
+        return  Hit(true, q, l, ray.dir, norm, s.color, s.materialIdx);
      }
      return newHit();
 }
@@ -129,7 +136,7 @@ struct Triangle {
     vec3 b;
     vec3 c;
     vec3 color;
-    float gloss;
+    int materialIdx;
 };
 
 Hit hit_triangle(Triangle tri, Ray ray) {
@@ -158,7 +165,7 @@ Hit hit_triangle(Triangle tri, Ray ray) {
     if (t > EPS) {
         vec3 hitPoint = ray.origin + t * ray.dir;
         vec3 norm = normalize(cross(edge1, edge2));
-        return Hit(true, hitPoint, t, ray.dir, norm, tri.color, tri.gloss);
+        return Hit(true, hitPoint, t, ray.dir, norm, tri.color, tri.materialIdx);
     }
 
     return newHit();
@@ -196,7 +203,8 @@ vec3 finalColor(Hit hit, Light light) {
     return (AMBIENT + shade(hit, light) + specular(hit, light)) * hit.color; 
 }
 
-vec3 computeLighting(Hit hit, Light light, Material m) {
+vec3 computeLighting(Hit hit, Light light, int materialIdx) {
+    Material m = getMaterial(materialIdx);
     vec3 toLight = normalize(light.pos - hit.point);
     vec3 viewDir = normalize(-hit.incidence);
     vec3 reflectDir = reflect(-toLight, hit.norm);
@@ -213,18 +221,18 @@ vec3 computeLighting(Hit hit, Light light, Material m) {
     return ambient + diffuse + specular;
 }
 
-vec3 traceSphere(Ray ray) {
-    Sphere s = Sphere(vec3(0.0), 0.5, vec3(1.0, 0.0, 0.0), 0.3);
+vec3 traceSphere(Ray ray, int materialIdx) {
+    Sphere s = Sphere(vec3(0.0), 0.5, vec3(1.0, 0.0, 0.0), materialIdx);
     Light light = makeLight(vec3(sin(time), 0.0, cos(time)) * 2.0);
 	Hit hit = hit_sphere(s, ray);
 	if (hit.exists) {
-        return computeLighting(hit, light, materials[3]);
+        return computeLighting(hit, light, hit.materialIdx);
 	}
     return bg;
 }
 
 vec3 traceTriangle(Ray ray) {
-    Triangle t = Triangle(vec3(-0.5, -0.5, 0.0), vec3(0.5, -0.5, 0.0), vec3(0.0, 0.5, 0.0), vec3(0.0, 0.0, 1.0), 0.3);
+    Triangle t = Triangle(vec3(-0.5, -0.5, 0.0), vec3(0.5, -0.5, 0.0), vec3(0.0, 0.5, 0.0), vec3(0.0, 0.0, 1.0), 1);
     Light light = makeLight(vec3(sin(time), 0.0, cos(time)) * 2.0);
 
     Hit hit = hit_triangle(t, ray);
@@ -236,29 +244,23 @@ vec3 traceTriangle(Ray ray) {
 
 struct Pyramid {
     Triangle tris[6];
+    int materialIdx;
 };
 
 
-struct TriHit {
-    Hit hit;
-    int index;
-};
-
-TriHit hit_pyramid(Pyramid p, Ray ray) {
+Hit hit_pyramid(Pyramid p, Ray ray) {
     Hit bestHit = newHit();
     float lambda = 1e9;
-    int index = -1;
 
     for (int i = 0; i < 6; i++) {
         Hit h = hit_triangle(p.tris[i], ray);
         if (h.exists && h.lambda < lambda) {
             bestHit = h;
             lambda = h.lambda;
-            index = i;
         }
     }
 
-    return TriHit(bestHit, index);
+    return bestHit;
 }
 
 bool triangleInShade(Triangle tris[6], int index, Hit hit, Light light) {
@@ -275,28 +277,30 @@ bool triangleInShade(Triangle tris[6], int index, Hit hit, Light light) {
 }
 
 
-vec3 tracePyramid(Ray ray) {
+vec3 tracePyramid(Ray ray, int materialIdx) {
     float size = 0.4;
     float angle = time * -0.1 * 22.0 / 7.0;
     mat3 rot = rotationY(radians(45.0) + angle);
     Pyramid p;
-    p.tris[0] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(size, -size, -size), rot * vec3(-size, -size, -size), teal, 0.3);
-    p.tris[1] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(size, -size, size), rot * vec3(size, -size, -size), teal, 0.3);
-    p.tris[2] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(-size, -size, size), rot * vec3(size, -size, size), teal, 0.3);
-    p.tris[3] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(-size, -size, -size), rot * vec3(-size, -size, size), teal, 0.3);
-    p.tris[4] = Triangle(rot * vec3(-size, -size, size), rot * vec3(size, -size, size), rot * vec3(size, -size, -size),  teal, 0.3),
-    p.tris[5] = Triangle(rot * vec3(-size, -size, size), rot * vec3(size, -size, -size), rot * vec3(-size, -size, -size),  teal, 0.3);
-    Light light = makeLight(vec3(sin(time), 1.0, cos(time)) * 0.4);
+    p.materialIdx = materialIdx;
+    p.tris[0] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(size, -size, -size), rot * vec3(-size, -size, -size), teal, p.materialIdx);
+    p.tris[1] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(size, -size, size), rot * vec3(size, -size, -size), teal, p.materialIdx);
+    p.tris[2] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(-size, -size, size), rot * vec3(size, -size, size), teal, p.materialIdx);
+    p.tris[3] = Triangle(rot * vec3(0.0, size, 0.0), rot * vec3(-size, -size, -size), rot * vec3(-size, -size, size), teal, p.materialIdx);
+    p.tris[4] = Triangle(rot * vec3(-size, -size, size), rot * vec3(size, -size, size), rot * vec3(size, -size, -size),  teal, p.materialIdx),
+    p.tris[5] = Triangle(rot * vec3(-size, -size, size), rot * vec3(size, -size, -size), rot * vec3(-size, -size, -size),  teal, p.materialIdx);
+    Light light = makeLight(vec3(sin(time) * 2.0, 1.0, cos(time) * 2.0) * 0.4);
 
-    TriHit hit = hit_pyramid(p, ray);
-    if (hit.hit.exists) {
-        return computeLighting(hit.hit, light, materials[4]);
+    Hit hit = hit_pyramid(p, ray);
+    if (hit.exists) {
+        return computeLighting(hit, light, hit.materialIdx);
     }
     return bg;
 }
 
 struct Diamond {
     Triangle tris[80];
+    int materialIdx;
 };
 
 Hit hit_diamond(Diamond d, Ray ray) {
@@ -315,8 +319,9 @@ Hit hit_diamond(Diamond d, Ray ray) {
     return bestHit;
 }
 
-vec3 traceDiamond(Ray ray) {
+vec3 traceDiamond(Ray ray, int materialIdx) {
     Diamond diamond;
+    diamond.materialIdx = materialIdx;
     int segments = 20;
     float angleStep = 22.0 / 7.0 * 2.0 / segments;
     float r = 0.4;
@@ -330,16 +335,16 @@ vec3 traceDiamond(Ray ray) {
        vec3 b = rot * vec3(cos((i + 1) * angleStep) * r, 0.4, sin((i + 1) * angleStep) * r);
        vec3 c = rot * vec3(cos((i + 1) * angleStep) * R, 0.3, sin((i + 1) * angleStep) * R) ;
        vec3 d = rot * vec3(cos(i * angleStep) * R, 0.3, sin(i * angleStep) * R); 
-       diamond.tris[index] = Triangle(a, b, c, purple, 0.3); 
-       diamond.tris[index + 1] = Triangle(a, c, d, purple, 0.3);
-       diamond.tris[index + 2] = Triangle(d, c, centerBottom, purple, 0.3);
-       diamond.tris[index + 3] = Triangle(centerTop, b, a, purple, 0.3);
+       diamond.tris[index] = Triangle(a, b, c, purple, diamond.materialIdx); 
+       diamond.tris[index + 1] = Triangle(a, c, d, purple, diamond.materialIdx);
+       diamond.tris[index + 2] = Triangle(d, c, centerBottom, purple, diamond.materialIdx);
+       diamond.tris[index + 3] = Triangle(centerTop, b, a, purple, diamond.materialIdx);
     }
     Light light = makeLight(vec3(0.0, cos(time), sin(time)) * 2.0);
 
     Hit hit = hit_diamond(diamond, ray);
     if (hit.exists) {
-        return computeLighting(hit, light, materials[0]);
+        return computeLighting(hit, light, hit.materialIdx);
 	}
     return bg;
 }
@@ -352,6 +357,21 @@ mat3 faceMatrix(int i) {
     if (i == 4) return mat3(vec3(1, 0,  0), vec3(0, 1, 0), vec3(0, 0, 1) );
     if (i == 5) return mat3(vec3(-1, 0,  0), vec3(0, 1, 0), vec3(0, 0, -1));
     return mat3(            vec3(-2, 0,  0), vec3(0, 1, 0), vec3( 0, 0, -1));
+}
+
+bool inRange(float x, float l, float r) {
+    return x >= l && x <= r;
+}
+
+int onBorder(vec2 uv) {
+  if (!inRange(uv.x, 0.05, 0.95)) {
+    if (!inRange(uv.y, 0.05, 0.95))  return 1;  
+    else  return 2; 
+  } else if (!inRange(uv.y, 0.05, 0.95)) {
+    if (!inRange(uv.x, 0.05, 0.95)) return 1; 
+    else return 2;
+  }
+  return 0;
 }
 
 void main() {
@@ -367,15 +387,18 @@ void main() {
     Ray ray = newRay(origin, uv, -1.0);
     createMaterials();
 
-    if (f_uv.x <= 0.05 || f_uv.y <= 0.05 || f_uv.x >= 0.95 || f_uv.y >= 0.95) {
+    int border = onBorder(f_uv);
+    if (border == 1) {
+        color =  vec4(white, 1.0);
+    } else if (border == 2) {
         color = vec4(black, 1.0);
     } else {
-		if (faceIndex == 0) color = vec4(tracePyramid(ray), 1.0);
-		else if (faceIndex == 1) color = vec4(tracePyramid(ray), 1.0);
-		else if (faceIndex == 2) color = vec4(traceSphere(ray), 1.0);
-		else if (faceIndex == 3) color = vec4(traceSphere(ray), 1.0);
-		else if (faceIndex == 4) color = vec4(traceDiamond(ray), 1.0);
-		else if (faceIndex == 5) color = vec4(traceSphere(ray), 1.0);
+		if (faceIndex == 0) color = vec4(tracePyramid(ray, 4), 1.0);
+		else if (faceIndex == 1) color = vec4(tracePyramid(ray, 5), 1.0);
+		else if (faceIndex == 2) color = vec4(traceSphere(ray, 1), 1.0);
+		else if (faceIndex == 3) color = vec4(traceSphere(ray, 2), 1.0);
+		else if (faceIndex == 4) color = vec4(traceDiamond(ray, 0), 1.0);
+		else if (faceIndex == 5) color = vec4(traceDiamond(ray, 3), 1.0);
 		else color = vec4(1.0);
 		//color = vec4(vec3(faceIndex), 1.0);
     }
