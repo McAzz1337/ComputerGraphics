@@ -84,6 +84,10 @@ int main() {
 		meshIndex = --meshIndex % meshes.size();
 		input.release(GLFW_KEY_LEFT);
 					});
+	input.setAction(GLFW_KEY_P, [](float) { 
+		meshes[meshIndex].getMaterial().getShader().reloadFromDisk();
+		input.release(GLFW_KEY_P);
+					});
 	input.setAction(GLFW_KEY_W, [&cam](float delta) { cam.translate(cam.forward() * delta); });
 	input.setAction(GLFW_KEY_S, [&cam](float delta) { cam.translate(-cam.forward() * delta); });
 	input.setAction(GLFW_KEY_A, [&cam](float delta) { cam.translate(-cam.right() * delta); });
@@ -100,11 +104,13 @@ int main() {
 #pragma endregion 
 
 #pragma region SHADERS
+	/*
 	Shader::loadShaders("shaders/shaders");
 	Shader* simpleShader = Shader::getShader("shaders/shader");
 	Shader* textureShader = Shader::getShader("shaders/tex_shader");
 	Shader* bumpShader = Shader::getShader("shaders/bump_shader");
 	bumpShader->setUniformi1("bump", 1);
+	*/
 #pragma endregion 
 
 	Mesh mesh;
@@ -120,7 +126,7 @@ int main() {
 	glm::mat4 trans1;
 	glm::mat4 trans2;
 
-	textureShader->bind();
+	//textureShader->bind();
 	float scrollTime = 10.0f;
 	float scrollElapsed = 0.0f;
 
@@ -162,7 +168,7 @@ int main() {
 		Mesh& mesh = meshes[meshIndex];
 		Shader& shader = mesh.getMaterial().getShader();
 		shader.setUniformf1("time", elapsed);
-		shader.setUniformi1("type", 2);
+		//shader.setUniformi1("type", 2);
 		glm::mat3 view = glm::mat3(cam.getView());
 		shader.setMatrix3("viewMat", view);
 		float resolution[2] = { 640.0f, 640.0f };
