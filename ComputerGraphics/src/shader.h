@@ -26,6 +26,7 @@ public:
 	~Shader();
 
 	void load(const std::string& file);
+	void reloadFromDisk();
 	void free();
 
 	void bind() const;
