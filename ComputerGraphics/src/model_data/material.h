@@ -29,10 +29,10 @@ private:
 	float roughness = 0.0f;
 	float metallic = 0.0f;
 
-	Texture* tex = nullptr;
-	Texture* tex1 = nullptr;
-	Texture* bumpMap = nullptr;
-	Texture* normalMap = nullptr;
+	Texture tex;
+	Texture tex1;
+	Texture bumpMap;
+	Texture normalMap;
 
 	Shader shader;
 
@@ -52,6 +52,8 @@ public:
 
 	void bind(const glm::mat4& projectionView) const;
 	void assignAssets(std::unordered_map<assetimporter::AssetType, std::string> assets);
+	void assignTex0(Texture tex);
+	void assignTex1(Texture tex);
 	void assignShader(Shader shader);
 
 	inline Shader& getShader() { return shader;  }

@@ -49,22 +49,30 @@ void Material::bind(const glm::mat4& projectionView) const {
 	shader.setUniformf1("metallic", metallic);
 	shader.setMatrix4("mvp", projectionView);
 
-	if (tex) tex->bind();
-	if (tex1) tex1->bind(1);
+	tex.bind();
+	tex1.bind(1);
+}
+
+void Material::assignTex0(Texture tex) {
+	this->tex = tex;
+}
+
+void Material::assignTex1(Texture tex) {
+	this->tex1 = tex;
 }
 
 void Material::assignAssets(std::unordered_map<assetimporter::AssetType, std::string> textures) {
 	auto it = textures.find(assetimporter::AssetType::DIFFUSE0);
-	if (it != textures.end()) tex = new Texture(it->second);
+	if (it != textures.end()) tex = Texture(it->second);
 	it = textures.find(assetimporter::AssetType::DIFFUSE1);
-	if (it != textures.end()) tex1 = new Texture(it->second);
+	if (it != textures.end()) tex1 = Texture(it->second);
 	it = textures.find(assetimporter::AssetType::BUMP_MAP);
-	if (it != textures.end()) bumpMap = new Texture(it->second);
+	if (it != textures.end()) bumpMap = Texture(it->second);
 	it = textures.find(assetimporter::AssetType::NORMAL_MAP);
-	if (it != textures.end()) normalMap = new Texture(it->second);
+	if (it != textures.end()) normalMap = Texture(it->second);
 	it = textures.find(assetimporter::AssetType::SHADER);
 	if (it != textures.end()) shader = Shader(it->second);
-	 shader.setUniformf1("tex1", 1);
+	shader.setUniformf1("tex1", 1);
 }
 
 void Material::assignShader(Shader shader) {
