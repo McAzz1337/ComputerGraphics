@@ -115,9 +115,50 @@ void createRayTracerCube(std::vector<Mesh>& meshes) {
 	meshes.push_back(cube);
 }
 
+void createSea(std::vector<Mesh>& meshes) {
+	float quadSize = 0.1f;
+	int dimension = 10;
+	float offset = dimension * 0.5 * quadSize;
+	glm::mat4 rot = glm::rotate(glm::mat4(1.0f), (float) std::numbers::pi * -0.5f, { 1.0f, 0.0f, 0.0f });
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	for (int z = 0; z < dimension; z++) {
+		for (int x = 0; x < dimension; x++) {
+			glm::mat4 transform = glm::translate(glm::mat4(1.0f), { x * quadSize - offset, -0.1f, z * quadSize - offset });
+			std::vector<uint32_t> temp;
+			createPlane(vertices, temp, quadSize, transform * rot);
+		}
+	}
+	for (int i = 0; i < vertices.size() / 2 * 3; i += 4) {
+		indices.push_back(i);
+		indices.push_back(i + 1);
+		indices.push_back(i + 2);
+
+		indices.push_back(i);
+		indices.push_back(i + 2);
+		indices.push_back(i + 3);
+	}
+
+	Mesh sea;
+	VertexBuffer vbo(vertices.data(), vertices.size());
+	IndexBuffer ibo(indices.data(), indices.size());
+	sea.assignBuffers(vbo, ibo);
+	Material mat;
+	Shader shader("shaders/wave_shader");
+	shader.setUniformi1("tex1", 1);
+	Texture tex("textures/albedo.png");
+	Texture tex1("textures/albedo2.png");
+	mat.assignShader(shader);
+	mat.assignTex0(tex);
+	mat.assignTex1(tex1);
+	sea.assignMaterial(mat);
+	meshes.push_back(sea);
+}
+
 void createMeshes(std::vector<Mesh>& meshes) {
 	createSphere(meshes);
 	createDie(meshes);
 	createFractalCube(meshes);
 	createRayTracerCube(meshes);
+	createSea(meshes);
 }
