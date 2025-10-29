@@ -19,6 +19,30 @@ vec3 blue = vec3(0.0, 0.0, 1.0);
 vec3 purple = vec3(0.5, 0.0, 0.8);
 vec3 teal = vec3(0.0, 0.8, 1.0);
 
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+};
+
+Material materials[5];
+
+void createMaterials() {
+    //ruby
+    materials[0] = Material(vec3(0.1745, 0.01175, 0.01175), vec3(0.61424, 0.04136, 0.04136), vec3(0.727811, 0.626959, 0.626959), 0.6);
+    // copper
+    materials[1] = Material(vec3(0.19125, 0.0735, 0.0225), vec3(0.7038, 0.27048, 0.0828), vec3(0.256777, 0.137622, 0.086014), 0.1);
+    //obsidian 	
+    materials[2] = Material(vec3(0.05375, 0.05, 0.06625), vec3(0.18275, 0.17, 0.22525), vec3(0.332741, 0.328634, 0.346435), 0.3);
+    //emerald
+   materials[3] = Material(vec3(0.0215, 0.1745, 0.0215), vec3(0.07568, 0.61424, 0.07568), vec3(0.633, 0.727811, 0.633), 0.6);
+   //jade
+   materials[4] = Material(vec3(0.135, 0.2225, 0.1575), vec3(0.54, 0.89, 0.63), vec3(0.316228, 0.316228, 0.316228),	0.1);
+}
+
+
+
 mat3 rotationY(float angle) {
     float s = sin(angle);
     float c = cos(angle);
@@ -172,12 +196,29 @@ vec3 finalColor(Hit hit, Light light) {
     return (AMBIENT + shade(hit, light) + specular(hit, light)) * hit.color; 
 }
 
+vec3 computeLighting(Hit hit, Light light, Material m) {
+    vec3 toLight = normalize(light.pos - hit.point);
+    vec3 viewDir = normalize(-hit.incidence);
+    vec3 reflectDir = reflect(-toLight, hit.norm);
+
+    // Components
+    float diff = max(dot(hit.norm, toLight), 0.0);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), m.shininess * 128.0);
+
+    // Combine
+    vec3 ambient = AMBIENT * m.ambient;
+    vec3 diffuse = m.diffuse * diff;
+    vec3 specular = m.specular * spec;
+
+    return ambient + diffuse + specular;
+}
+
 vec3 traceSphere(Ray ray) {
     Sphere s = Sphere(vec3(0.0), 0.5, vec3(1.0, 0.0, 0.0), 0.3);
     Light light = makeLight(vec3(sin(time), 0.0, cos(time)) * 2.0);
 	Hit hit = hit_sphere(s, ray);
 	if (hit.exists) {
-			return  finalColor(hit, light);
+        return computeLighting(hit, light, materials[3]);
 	}
     return bg;
 }
@@ -196,6 +237,7 @@ vec3 traceTriangle(Ray ray) {
 struct Pyramid {
     Triangle tris[6];
 };
+
 
 struct TriHit {
     Hit hit;
@@ -232,6 +274,7 @@ bool triangleInShade(Triangle tris[6], int index, Hit hit, Light light) {
     return false;
 }
 
+
 vec3 tracePyramid(Ray ray) {
     float size = 0.4;
     float angle = time * -0.1 * 22.0 / 7.0;
@@ -247,7 +290,7 @@ vec3 tracePyramid(Ray ray) {
 
     TriHit hit = hit_pyramid(p, ray);
     if (hit.hit.exists) {
-            return finalColor(hit.hit, light); 
+        return computeLighting(hit.hit, light, materials[4]);
     }
     return bg;
 }
@@ -296,8 +339,8 @@ vec3 traceDiamond(Ray ray) {
 
     Hit hit = hit_diamond(diamond, ray);
     if (hit.exists) {
-        return finalColor(hit, light); 
-    }
+        return computeLighting(hit, light, materials[0]);
+	}
     return bg;
 }
 
@@ -319,9 +362,10 @@ void main() {
 
     Light light = makeLight(vec3(sin(time), 0.0, cos(time)) * 2.0);
     mat3 faceRot = faceMatrix(faceIndex);
-    float dist = (faceIndex == 4 || faceIndex == 2) ? 4-0 : 3.0;
+    float dist = (faceIndex == 4 || faceIndex == 2) ? 4.0 : 3.0;
     vec3 origin = viewMat * faceRot *  vec3(0.0, 0.0, -dist);
     Ray ray = newRay(origin, uv, -1.0);
+    createMaterials();
 
     if (f_uv.x <= 0.05 || f_uv.y <= 0.05 || f_uv.x >= 0.95 || f_uv.y >= 0.95) {
         color = vec4(black, 1.0);
