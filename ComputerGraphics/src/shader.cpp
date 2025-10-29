@@ -20,7 +20,6 @@ const std::string VS_EXT = ".vert";
 const std::string GS_EXT = ".geo";
 const std::string FS_EXT = ".frag";
 
-std::unordered_map<std::string, Shader> shaders;
 
 Shader::Shader() {
 
@@ -52,8 +51,8 @@ void Shader::load(const std::string& file) {
 	readFile((file + VS_EXT).c_str(), vsrc, true);
 	readFile((file + FS_EXT).c_str(), fsrc, true);
 
-	//printf("%s Vertex Shader source:\n %s\n\n", fileName.c_str(), vsrc.c_str());
-	//printf("%s Fragment Shader source:\n %s\n\n", fileName.c_str(), fsrc.c_str());
+	printf("%s Vertex Shader source:\n %s\n\n", fileName.c_str(), vsrc.c_str());
+	printf("%s Fragment Shader source:\n %s\n\n", fileName.c_str(), fsrc.c_str());
 
 	uint32_t vs;
 	uint32_t fs;
@@ -70,8 +69,11 @@ void Shader::load(const std::string& file) {
 	glDeleteShader(fs);
 
 	setUniformi1("tex", 0);
+}
 
-	shaders.emplace(std::make_pair(file, *this));
+void Shader::reloadFromDisk() {
+	printf("Reloading file: %s\n", file.c_str());
+	load(file);
 }
 
 void Shader::free() {
@@ -312,15 +314,5 @@ void Shader::loadShaders(const std::string& shaderListFile) {
 	for (auto& path : shaderFilePaths) {
 		Shader shader;
 		shader.load(path);
-	}
-}
-
-Shader* Shader::getShader(const std::string& path) {
-	if (shaders.contains(path)) {
-		return &shaders[path];
-	} else {
-		Shader shader;
-		shader.load(path);
-		return  &shaders[path];
 	}
 }
