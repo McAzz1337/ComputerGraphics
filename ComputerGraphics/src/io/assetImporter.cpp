@@ -25,6 +25,7 @@ namespace assetimporter {
 	void init() {
 		textureLiterals.insert(std::make_pair("diffuse", AssetType::DIFFUSE1));
 		textureLiterals.insert(std::make_pair("shader", AssetType::SHADER));
+		textureLiterals.insert(std::make_pair("bump", AssetType::BUMP_MAP));
 	}
 
 	// Stellt sicher, dass der Dateipfad der Texturen richitg ist
@@ -117,6 +118,14 @@ namespace assetimporter {
 
 				aiVector3D pos = mesh->mVertices[j];
 				aiVector3D normal = mesh->mNormals[j];
+				aiVector3D tangent;
+				if (j < mesh->mTangents->Length()) {
+					tangent  = mesh->mTangents[j];
+				} 
+				aiVector3D biTangent;
+				if (j < mesh->mBitangents->Length()) {
+					biTangent = mesh->mBitangents[j];
+				}
 
 				glm::vec2 uv(0.0f);
 				if (mesh->mTextureCoords[0]) {
@@ -147,6 +156,7 @@ namespace assetimporter {
 				indices.push_back(mesh->mFaces[j].mIndices[2u]);
 
 			}
+			
 
 			// Texturpfade auslesen
 			if (mesh->mMaterialIndex >= 0) {
