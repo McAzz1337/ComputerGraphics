@@ -30,8 +30,6 @@ void createDie(std::vector<Mesh>& meshes) {
 	VertexBuffer vbo(verticies.data(), verticies.size());
 	uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
 	IndexBuffer ibo(indicies.data(), indicies.size());
-	Shader shader("shaders/bump_shader");
-	material.assignShader(shader);
 	Mesh mesh;
 	mesh.assignBuffers(vbo, ibo);
 	mesh.assignMaterial(material);
@@ -80,7 +78,22 @@ static void createCube(std::vector<Vertex>& verteces, std::vector<uint32_t>& ind
 	create(down, 3);
 	create(left, 4);
 	create(right, 5);
+}
 
+static void createMCube(std::vector<Mesh>& meshes) {
+	std::vector<Vertex> verticies;
+	std::vector<uint32_t> indicies;
+	Material material;
+	Shader shader("shaders/bump_shader");
+	material.assignShader(shader);
+	assetimporter::loadModel("models/m_cube", "m_cube.fbx", verticies, indicies, material);
+	VertexBuffer vbo(verticies.data(), verticies.size());
+	uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
+	IndexBuffer ibo(indicies.data(), indicies.size());
+	Mesh mesh;
+	mesh.assignBuffers(vbo, ibo);
+	mesh.assignMaterial(material);
+	meshes.push_back(mesh);
 }
 
 void createFractalCube(std::vector<Mesh>& meshes) {
@@ -117,7 +130,7 @@ void createRayTracerCube(std::vector<Mesh>& meshes) {
 
 void createSea(std::vector<Mesh>& meshes) {
 	float quadSize = 0.1f;
-	int dimension = 10;
+	int dimension = 50;
 	float offset = dimension * 0.5 * quadSize;
 	glm::mat4 rot = glm::rotate(glm::mat4(1.0f), (float) std::numbers::pi * -0.5f, { 1.0f, 0.0f, 0.0f });
 	std::vector<Vertex> vertices;
@@ -161,4 +174,5 @@ void createMeshes(std::vector<Mesh>& meshes) {
 	createFractalCube(meshes);
 	createRayTracerCube(meshes);
 	createSea(meshes);
+	createMCube(meshes);
 }
