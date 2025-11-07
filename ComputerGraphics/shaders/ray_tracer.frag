@@ -7,6 +7,7 @@ uniform float time;
 uniform int type;
 uniform mat3 viewMat;
 uniform vec3 cameraPos;
+uniform float borderSize = 0.05;
 
 out vec4 color;
 
@@ -331,10 +332,12 @@ vec3 traceDiamond(Ray ray, int materialIdx) {
     vec3 centerBottom = rot * vec3(0.0, -0.4, 0.0);
     for (int i = 0; i < segments; i++) {
        int index = i * 4;
-       vec3 a = rot * vec3(cos(i * angleStep) * r, 0.4, sin(i * angleStep) * r); 
-       vec3 b = rot * vec3(cos((i + 1) * angleStep) * r, 0.4, sin((i + 1) * angleStep) * r);
-       vec3 c = rot * vec3(cos((i + 1) * angleStep) * R, 0.3, sin((i + 1) * angleStep) * R) ;
-       vec3 d = rot * vec3(cos(i * angleStep) * R, 0.3, sin(i * angleStep) * R); 
+       float cc = cos(i * angleStep);
+       float ccc = cos((i + 1) * angleStep);
+       vec3 a = rot * vec3(cc * r, 0.4, sin(i * angleStep) * r); 
+       vec3 b = rot * vec3(ccc  * r, 0.4, sin((i + 1) * angleStep) * r);
+       vec3 c = rot * vec3(ccc * R, 0.3, sin((i + 1) * angleStep) * R) ;
+       vec3 d = rot * vec3(cc * R, 0.3, sin(i * angleStep) * R); 
        diamond.tris[index] = Triangle(a, b, c, purple, diamond.materialIdx); 
        diamond.tris[index + 1] = Triangle(a, c, d, purple, diamond.materialIdx);
        diamond.tris[index + 2] = Triangle(d, c, centerBottom, purple, diamond.materialIdx);
@@ -364,11 +367,14 @@ bool inRange(float x, float l, float r) {
 }
 
 int onBorder(vec2 uv) {
-  if (!inRange(uv.x, 0.05, 0.95)) {
-    if (!inRange(uv.y, 0.05, 0.95))  return 1;  
+    float size = (sin(time) * 0.5 + 1.0) * (borderSize * 0.5);
+    bool xOnBorder = !inRange(uv.x, size, 1.0 - size);
+    bool yOnBorder = !inRange(uv.y, size, 1.0 - size);
+  if (xOnBorder) {
+    if (yOnBorder)  return 1;  
     else  return 2; 
-  } else if (!inRange(uv.y, 0.05, 0.95)) {
-    if (!inRange(uv.x, 0.05, 0.95)) return 1; 
+  } else if (yOnBorder) {
+    if (xOnBorder) return 1; 
     else return 2;
   }
   return 0;
@@ -400,6 +406,5 @@ void main() {
 		else if (faceIndex == 4) color = vec4(traceDiamond(ray, 0), 1.0);
 		else if (faceIndex == 5) color = vec4(traceDiamond(ray, 3), 1.0);
 		else color = vec4(1.0);
-		//color = vec4(vec3(faceIndex), 1.0);
     }
 }
