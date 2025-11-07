@@ -51,6 +51,7 @@ void Material::bind(const glm::mat4& projectionView) const {
 
 	tex.bind();
 	tex1.bind(1);
+	bumpMap.bind(2);
 }
 
 void Material::assignTex0(Texture tex) {
@@ -66,13 +67,19 @@ void Material::assignAssets(std::unordered_map<assetimporter::AssetType, std::st
 	if (it != textures.end()) tex = Texture(it->second);
 	it = textures.find(assetimporter::AssetType::DIFFUSE1);
 	if (it != textures.end()) tex1 = Texture(it->second);
-	it = textures.find(assetimporter::AssetType::BUMP_MAP);
-	if (it != textures.end()) bumpMap = Texture(it->second);
 	it = textures.find(assetimporter::AssetType::NORMAL_MAP);
 	if (it != textures.end()) normalMap = Texture(it->second);
+
 	it = textures.find(assetimporter::AssetType::SHADER);
-	if (it != textures.end()) shader = Shader(it->second);
-	shader.setUniformf1("tex1", 1);
+	if (it != textures.end()) {
+		shader = Shader(it->second);
+		shader.setUniformf1("tex1", 1);
+	}
+	it = textures.find(assetimporter::AssetType::BUMP_MAP);
+	if (it != textures.end()) {
+		bumpMap = Texture(it->second);
+		shader.setUniformi1("bump", 2);
+	}
 }
 
 void Material::assignShader(Shader shader) {
