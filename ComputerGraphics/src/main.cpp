@@ -44,7 +44,7 @@ static void keyCallback(GLFWwindow* window, int key, int scan, int action, int m
 }
 
 static void cursorPosCallback(GLFWwindow* window, double x, double y) {
-	printf("moved: %f, %f\n", x, y);
+	//printf("moved: %f, %f\n", x, y);
 	input.moveMouse({ (float) x, (float) y });
 }
 static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mod) {
@@ -58,7 +58,7 @@ static void mouseButtonCallback(GLFWwindow* window, int button, int action, int 
 
 
 
-int meshIndex = 3;
+int meshIndex;
 std::vector<Mesh> meshes;
 
 int main() {
@@ -120,7 +120,7 @@ int main() {
 	Shader rayTracingShader("shaders/ray_tracer");
 	{
 		float resolution[2] = { 640.0f, 640.0f };
-		rayTracingShader.setUniform2f("resolution", resolution);
+		//rayTracingShader.setUniform2f("resolution", resolution);
 	}
 
 	glm::mat4 trans1;
@@ -137,12 +137,14 @@ int main() {
 	glCullFace(GL_BACK);
 	glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	glfwSwapInterval(0);
 #pragma endregion
 
 	std::chrono::time_point last = std::chrono::steady_clock::now();
 	float elapsed = 0.0f;
 
 	createMeshes(meshes);
+	meshIndex = meshes.size() - 1;
 	while (window.shouldClose()) {
 		std::chrono::time_point now = std::chrono::steady_clock::now();
 		float delta = std::chrono::duration<float, std::milli>(now - last).count() / 1000.0f;
@@ -152,6 +154,8 @@ int main() {
 			scrollElapsed = 0.0f;
 		}
 		last = now;
+		float fps = 1.0f / delta;
+		printf("%f.2\n", fps);
 		glfwPollEvents();
 
 		input.execute(delta);
@@ -171,8 +175,10 @@ int main() {
 		//shader.setUniformi1("type", 2);
 		glm::mat3 view = glm::mat3(cam.getView());
 		shader.setMatrix3("viewMat", view);
+		shader.setMatrix4("model", glm::mat4(1.0f));
 		float resolution[2] = { 640.0f, 640.0f };
 		shader.setUniform2f("resolution", resolution);
+		shader.setUniformf3("cameraPos", cam.getPos());
 		mesh.bind(pv * trans1);
 		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
 
