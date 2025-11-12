@@ -36,6 +36,7 @@ void createDie(std::vector<Mesh>& meshes) {
 	meshes.push_back(mesh);
 }
 
+
 static void createPlane(std::vector<Vertex>& verteces, std::vector<uint32_t>& indices, float size, const glm::mat4& transform) {
 	float side = size * 0.5f;
 	glm::mat3 rot = (glm::mat3) transform;
