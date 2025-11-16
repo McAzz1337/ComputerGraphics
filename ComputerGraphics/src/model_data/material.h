@@ -36,6 +36,8 @@ private:
 
 	Shader shader;
 	std::unordered_map<std::string, int> uniformsI;
+	std::unordered_map<std::string, float> uniformsF;
+	std::unordered_map<std::string, glm::vec3> uniformsf3;
 
 
 
@@ -52,6 +54,8 @@ public:
 	~Material();
 
 	void addUniformI(std::string name, int uniform);
+	void addUniformF(std::string name, float uniform);
+	void addUniformF3(std::string name, glm::vec3 uniform);
 
 	void bind(const glm::mat4& projectionView) const;
 	void assignAssets(std::unordered_map<assetimporter::AssetType, std::string> assets);
@@ -59,7 +63,7 @@ public:
 	void assignTex1(Texture tex);
 	void assignShader(Shader shader);
 
-	inline Shader& getShader() { return shader;  }
+	inline const Shader& getShader() const { return shader;  }
 
 	static void fromValues(Material& mat,
 						   const glm::vec4 specular,
