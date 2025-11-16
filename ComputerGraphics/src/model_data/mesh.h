@@ -1,8 +1,6 @@
 #pragma once
 #include "generalMash.h"
 #include "vertexArray.h"
-
-
 #include "texture.h"
 #include  "../shader.h"
 #include "material.h"
