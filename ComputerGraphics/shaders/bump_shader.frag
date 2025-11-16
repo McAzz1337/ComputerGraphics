@@ -47,7 +47,7 @@ void main(){
 	vec3 viewDir = normalize(cameraPos - fragPos.xyz);
 	vec3 reflectDir = reflect(lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
-	vec3 specular =/* specularStrength **/ spec * lightColor;  
+	vec3 specular = spec * lightColor;  
 
 	vec4 pixelColor = texture(tex, f_uv);
 

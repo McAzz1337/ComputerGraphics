@@ -6,7 +6,6 @@ out vec4 color;
 uniform float time;
 
 vec3 colorPalette(float t) {
-	//[[0.168 0.500 0.758] [0.968 0.188 0.698] [1.048 1.000 1.000] [-0.042 0.258 0.667]]
 	vec3 a = vec3(0.168, 0.500, 0.758);
 	vec3 b = vec3(0.968, 0.188, 0.698);
 	vec3 c = vec3(1.048, 1.000, 1.000);
@@ -38,11 +37,12 @@ float sdHeart(in vec2 p)
 
 float sdCross(in vec2 p, in vec2 b, float r) 
 {
-    p = abs(p); p = (p.y>p.x) ? p.yx : p.xy;
+    p = abs(p); 
+	p = (p.y > p.x) ? p.yx : p.xy;
     vec2  q = p - b;
-    float k = max(q.y,q.x);
-    vec2  w = (k>0.0) ? q : vec2(b.y-p.x,-k);
-    return sign(k)*length(max(w,0.0)) + r;
+    float k = max(q.y, q.x);
+    vec2  w = (k > 0.0) ? q : vec2(b.y - p.x, -k);
+    return sign(k) * length(max(w,0.0)) + r;
 }
 
 float direction(float d, float time, int i) {
