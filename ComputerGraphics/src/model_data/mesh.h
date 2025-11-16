@@ -1,4 +1,5 @@
 #pragma once
+#include "generalMash.h"
 #include "vertexArray.h"
 
 
@@ -7,7 +8,7 @@
 #include "material.h"
 
 
-class Mesh {
+class Mesh: public GeneralMesh {
 
 	VertexArray vao;
 	IndexBuffer ibo;
@@ -21,13 +22,13 @@ public:
 	Mesh(const Mesh& other);
 	~Mesh();
 
-	void assignVertexArray(VertexArray vao, IndexBuffer ibo);
-	void assignBuffers(VertexBuffer vbo, IndexBuffer ibo);
-	void assignMaterial(Material mat);
+	void assignVertexArray(VertexArray vao, IndexBuffer ibo) override;
+	void assignBuffers(VertexBuffer vbo, IndexBuffer ibo) override;
+	void assignMaterial(Material mat) override;
 
-	void bind(const glm::mat4& projectionView) const;
+	void bind(const glm::mat4& projectionView) const override;
 
-	inline Material& getMaterial() { return mat;  }
-	VertexBuffer& getVbo();
-	IndexBuffer& getIbo();
+	inline Material& getMaterial() override { return mat;  }
+	VertexBuffer& getVbo() override;
+	IndexBuffer& getIbo() override;
 };
