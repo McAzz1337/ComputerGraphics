@@ -35,6 +35,7 @@ private:
 	Texture normalMap;
 
 	Shader shader;
+	std::unordered_map<std::string, int> uniformsI;
 
 
 
@@ -49,6 +50,8 @@ public:
 			 float metallic);
 
 	~Material();
+
+	void addUniformI(std::string name, int uniform);
 
 	void bind(const glm::mat4& projectionView) const;
 	void assignAssets(std::unordered_map<assetimporter::AssetType, std::string> assets);

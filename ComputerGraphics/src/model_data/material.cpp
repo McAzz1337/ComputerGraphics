@@ -14,7 +14,7 @@ Material::Material() {
 
 Material::Material(const Material& m)
 	: specular(m.specular), diffuse(m.diffuse), ambient(m.ambient), roughness(m.roughness), specularStrength(m.specularStrength),
-	metallic(m.metallic), tex(m.tex), tex1(m.tex1), bumpMap(m.bumpMap), normalMap(m.bumpMap), shader(m.shader) {
+	metallic(m.metallic), tex(m.tex), tex1(m.tex1), bumpMap(m.bumpMap), normalMap(m.bumpMap), shader(m.shader), uniformsI(m.uniformsI) {
 	//printf("copied material\n");
 }
 
@@ -38,6 +38,11 @@ Material::~Material() {
 
 }
 
+void Material::addUniformI(std::string name, int uniform) {
+	uniformsI.insert(std::make_pair(name, uniform));
+}
+
+
 void Material::bind(const glm::mat4& projectionView) const {
 
 	shader.bind();
@@ -48,6 +53,9 @@ void Material::bind(const glm::mat4& projectionView) const {
 	shader.setUniformf1("specularStrength", specularStrength);
 	shader.setUniformf1("metallic", metallic);
 	shader.setMatrix4("mvp", projectionView);
+	for (auto it = uniformsI.begin(); it != uniformsI.end(); it++) {
+		shader.setUniformi1(it->first.c_str(), it->second);
+	}
 
 	tex.bind();
 	tex1.bind(1);
