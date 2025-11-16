@@ -3,10 +3,11 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <numbers>
+#include "model_data/combinedMesh.h"
 
 #include "transform.h"
 
-void createSphere(std::vector<Mesh>& meshes) {
+void createSphere(std::vector<GeneralMesh*>& meshes) {
 	std::vector<Vertex> verticies;
 	std::vector<uint32_t> indicies;
 	Material material;
@@ -16,13 +17,13 @@ void createSphere(std::vector<Mesh>& meshes) {
 	IndexBuffer ibo(indicies.data(), indicies.size());
 	Shader shader("shaders/tex_shader");
 	material.assignShader(shader);
-	Mesh mesh;
-	mesh.assignBuffers(vbo, ibo);
-	mesh.assignMaterial(material);
+	Mesh* mesh = new Mesh();
+	mesh->assignBuffers(vbo, ibo);
+	mesh->assignMaterial(material);
 	meshes.push_back(mesh);
 }
 
-void createDie(std::vector<Mesh>& meshes) {
+void createDie(std::vector<GeneralMesh*>& meshes) {
 	std::vector<Vertex> verticies;
 	std::vector<uint32_t> indicies;
 	Material material;
@@ -30,9 +31,9 @@ void createDie(std::vector<Mesh>& meshes) {
 	VertexBuffer vbo(verticies.data(), verticies.size());
 	uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
 	IndexBuffer ibo(indicies.data(), indicies.size());
-	Mesh mesh;
-	mesh.assignBuffers(vbo, ibo);
-	mesh.assignMaterial(material);
+	Mesh* mesh = new Mesh();
+	mesh->assignBuffers(vbo, ibo);
+	mesh->assignMaterial(material);
 	meshes.push_back(mesh);
 }
 
@@ -81,7 +82,7 @@ static void createCube(std::vector<Vertex>& verteces, std::vector<uint32_t>& ind
 	create(right, 5);
 }
 
-static void createMCube(std::vector<Mesh>& meshes) {
+static void createMCube(std::vector<GeneralMesh*>& meshes) {
 	std::vector<Vertex> verticies;
 	std::vector<uint32_t> indicies;
 	Material material;
@@ -91,45 +92,45 @@ static void createMCube(std::vector<Mesh>& meshes) {
 	VertexBuffer vbo(verticies.data(), verticies.size());
 	uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
 	IndexBuffer ibo(indicies.data(), indicies.size());
-	Mesh mesh;
-	mesh.assignBuffers(vbo, ibo);
-	mesh.assignMaterial(material);
+	Mesh* mesh = new Mesh();
+	mesh->assignBuffers(vbo, ibo);
+	mesh->assignMaterial(material);
 	meshes.push_back(mesh);
 }
 
-void createFractalCube(std::vector<Mesh>& meshes) {
+void createFractalCube(std::vector<GeneralMesh*>& meshes) {
 	std::vector<Vertex> verteces;
 	std::vector<uint32_t> indices;
 	createCube(verteces, indices, 1.0f, glm::mat4(1.0f));
 	VertexBuffer vbo(verteces.data(), verteces.size());
 	IndexBuffer ibo(indices.data(), indices.size());
-	Mesh cube;
-	cube.assignBuffers(vbo, ibo);
+	Mesh* cube = new Mesh();
+	cube->assignBuffers(vbo, ibo);
 	Material mat;
 	Shader shader("shaders/fractal_shader");
 	mat.assignShader(shader);
-	cube.assignMaterial(mat);
+	cube->assignMaterial(mat);
 	meshes.push_back(cube);
 
 }
 
-void createRayTracerCube(std::vector<Mesh>& meshes) {
+void createRayTracerCube(std::vector<GeneralMesh*>& meshes) {
 	std::vector<Vertex> verteces;
 	std::vector<uint32_t> indices;
 	createCube(verteces, indices, 1.0f, glm::mat4(1.0f));
 	VertexBuffer vbo(verteces.data(), verteces.size());
 	IndexBuffer ibo(indices.data(), indices.size());
-	Mesh cube;
-	cube.assignBuffers(vbo, ibo);
+	Mesh* cube = new Mesh();
+	cube->assignBuffers(vbo, ibo);
 	Material mat;
 	Shader shader("shaders/ray_tracer");
 	shader.bind();
 	mat.assignShader(shader);
-	cube.assignMaterial(mat);
+	cube->assignMaterial(mat);
 	meshes.push_back(cube);
 }
 
-void createSea(std::vector<Mesh>& meshes) {
+void createSea(std::vector<GeneralMesh*>& meshes) {
 	float quadSize = 0.1f;
 	int dimension = 50;
 	float offset = dimension * 0.5 * quadSize;
@@ -153,10 +154,10 @@ void createSea(std::vector<Mesh>& meshes) {
 		indices.push_back(i + 3);
 	}
 
-	Mesh sea;
+	Mesh* sea = new Mesh();
 	VertexBuffer vbo(vertices.data(), vertices.size());
 	IndexBuffer ibo(indices.data(), indices.size());
-	sea.assignBuffers(vbo, ibo);
+	sea->assignBuffers(vbo, ibo);
 	Material mat;
 	Shader shader("shaders/wave_shader");
 	shader.setUniformi1("tex1", 1);
@@ -165,15 +166,120 @@ void createSea(std::vector<Mesh>& meshes) {
 	mat.assignShader(shader);
 	mat.assignTex0(tex);
 	mat.assignTex1(tex1);
-	sea.assignMaterial(mat);
+	sea->assignMaterial(mat);
 	meshes.push_back(sea);
 }
 
-void createMeshes(std::vector<Mesh>& meshes) {
+void createFish(std::vector<GeneralMesh*>& meshes) {
+	std::vector<Mesh*> m;
+
+	std::function<void(std::vector<uint32_t>&, size_t)> createIndices = [](std::vector<uint32_t>& indices, size_t numVertices) {
+		for (unsigned int i = 0; i < numVertices / 3 * 2; i += 4) {
+			indices.push_back(i);
+			indices.push_back(i + 1);
+			indices.push_back(i + 2);
+
+			indices.push_back(i);
+			indices.push_back(i + 2);
+			indices.push_back(i + 3);
+		}
+
+		};
+	{
+		std::vector<Vertex> verteces;
+		std::vector<uint32_t> indices;
+		for (int i = 0; i < 6; i++) {
+			glm::mat4 transform = glm::translate(glm::mat4(1.0f), { i * 1.0f - 1.5f, 0.0f, 0.0f });
+			std::vector<uint32_t> temp;
+			createPlane(verteces, temp, 1.0f, transform);
+		}
+		createIndices(indices, verteces.size());
+
+		VertexBuffer vbo(verteces.data(), verteces.size());
+		IndexBuffer ibo(indices.data(), indices.size());
+		Mesh* fish = new Mesh();
+		fish->assignBuffers(vbo, ibo);
+		Material mat;
+		Shader shader = Shader("shaders/fish_shader");
+		mat.assignShader(shader);
+		mat.addUniformI("isFin", 0);
+		fish->assignMaterial(mat);
+		m.push_back(fish);
+	}
+	{
+
+		std::vector<Vertex> verteces;
+		std::vector<uint32_t> indices;
+		std::vector<uint32_t> temp;
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), (float) std::numbers::pi * 0.125f, { 0.0f, 1.0f, 0.0f });
+		glm::mat4 translation = glm::translate(rotation, { -2.0f, 0.0f, 0.0f });
+		glm::mat4 t = glm::translate(translation, { 0.0f, 0.0f, 0.125f });
+		createPlane(verteces, temp, 1.0f, t);
+		rotation = glm::rotate(glm::mat4(1.0f), (float) std::numbers::pi * -0.125f, { 0.0f, 1.0f, 0.0f });
+		t = glm::translate(translation, { 0.0f, 0.0f, -0.125f });
+		createPlane(verteces, temp, 1.0f, t);
+		createIndices(indices, verteces.size());
+		Mesh* fins = new Mesh();
+		VertexBuffer vbo(verteces.data(), verteces.size());
+		IndexBuffer ibo(indices.data(), indices.size());
+		fins->assignBuffers(vbo, ibo);
+		Material mat;
+		Shader shader("shaders/fish_shader");
+		mat.assignShader(shader);
+		mat.addUniformI("isFin", 1);
+		fins->assignMaterial(mat);
+		m.push_back(fins);
+	}
+	CombinedMesh* mesh = new CombinedMesh(m);
+	meshes.push_back(mesh);
+}
+
+void createHeartFish(std::vector<GeneralMesh*>& meshes) {
+	std::vector<Mesh*> m;
+	{
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+		Material material;
+		material.addUniformI("isFin", 0);
+		Shader shader("shaders/fish_shader");
+		material.assignShader(shader);
+		assetimporter::loadModel("models/heart_fish", "heart_fish.fbx", vertices, indices, material);
+		VertexBuffer vbo(vertices.data(), vertices.size());
+		IndexBuffer ibo(indices.data(), indices.size());
+		Mesh* mesh = new Mesh();
+		mesh->assignBuffers(vbo, ibo);
+		mesh->assignMaterial(material);
+		m.push_back(mesh);
+	}
+	{
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+		Material material;
+		material.addUniformI("isFin", 1);
+		Shader shader("shaders/fish_shader");
+		material.assignShader(shader);
+		assetimporter::loadModel("models/heart_fish", "fins.fbx", vertices, indices, material);
+		glm::mat4 translation = glm::translate(glm::mat4(1.0f), { -0.3f, -0.7f, 0.0f });
+		for (int i = 0; i < vertices.size(); i++) {
+			vertices[i].pos = glm::vec3(translation * glm::vec4(vertices[i].pos, 1.0f));
+		}
+		VertexBuffer vbo(vertices.data(), vertices.size());
+		IndexBuffer ibo(indices.data(), indices.size());
+		Mesh* mesh = new Mesh();
+		mesh->assignBuffers(vbo, ibo);
+		mesh->assignMaterial(material);
+		m.push_back(mesh);
+	}
+	CombinedMesh* mesh = new CombinedMesh(m);
+	meshes.push_back(mesh);
+}
+
+void createMeshes(std::vector<GeneralMesh*>& meshes) {
 	createSphere(meshes);
 	createDie(meshes);
 	createFractalCube(meshes);
 	createRayTracerCube(meshes);
 	createSea(meshes);
 	createMCube(meshes);
+	createHeartFish(meshes);
 }
