@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <numbers>
 #include "model_data/combinedMesh.h"
+#include "model_data/outlinedMesh.h"
 
 #include "transform.h"
 
@@ -11,15 +12,24 @@ void createSphere(std::vector<GeneralMesh*>& meshes) {
 	std::vector<Vertex> verticies;
 	std::vector<uint32_t> indicies;
 	Material material;
+	Material outlineMat;
+	material.addUniformF3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+	material.addUniformF3("outlineColor", glm::vec3(1.0f, 0.0f, 0.0f));
+	material.addUniformF("thickness", 0.3f);
+	outlineMat.addUniformF3("color", glm::vec3(0.0f, 0.0f, 1.0f));
+	outlineMat.addUniformF3("outlineColor", glm::vec3(1.0f, 0.0f, 0.0f));
+	outlineMat.addUniformF("thickness", 0.3f);
 	assetimporter::loadModel("models/sphere", "sphere.obj", verticies, indicies, material);
 	VertexBuffer vbo(verticies.data(), verticies.size());
 	uint32_t inds[] = { 0, 1, 2, 0, 2, 3 };
 	IndexBuffer ibo(indicies.data(), indicies.size());
-	Shader shader("shaders/tex_shader");
+	Shader shader("shaders/outline_shader");
 	material.assignShader(shader);
-	Mesh* mesh = new Mesh();
+	outlineMat.assignShader(shader);
+	OutlinedMesh* mesh = new OutlinedMesh();
 	mesh->assignBuffers(vbo, ibo);
 	mesh->assignMaterial(material);
+	mesh->assignOutlineMaterial(outlineMat);
 	meshes.push_back(mesh);
 }
 
@@ -275,11 +285,11 @@ void createHeartFish(std::vector<GeneralMesh*>& meshes) {
 }
 
 void createMeshes(std::vector<GeneralMesh*>& meshes) {
-	createSphere(meshes);
 	createDie(meshes);
 	createFractalCube(meshes);
 	createRayTracerCube(meshes);
 	createSea(meshes);
 	createMCube(meshes);
 	createHeartFish(meshes);
+	createSphere(meshes);
 }
