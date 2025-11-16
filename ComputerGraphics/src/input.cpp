@@ -67,14 +67,12 @@ void Input::execute(float delta) {
 }
 
 void Input::releaseAllKeys() {
-	//printf("released all keys\n");
 	for (int i = 0; i < KEY_COUNT; i++) {
 		keys[i] = KeymapEntry((const char) i);
 	}
 }
 
 void Input::releaseAllMouseButtons() {
-	//printf("released all mouse buttons\n");
 	for (int i = 0; i < MOUSE_BUTTON_COUNT; i++) {
 		mouseButtons[i] = RELEASE;
 	}
@@ -82,17 +80,14 @@ void Input::releaseAllMouseButtons() {
 
 
 void Input::press(int key) {
-	//printf("pressed: %c\n", (char) key);
 	keys[key].state = PRESS;
 }
 
 void Input::release(int key) {
-	//printf("released: %c\n", (char) key);
 	keys[key].state = RELEASE;
 }
 
 void Input::hold(int key) {
-	//printf("holding: %c\n", (char) key);
 	keys[key].state = HOLD;
 }
 
