@@ -18,6 +18,8 @@
 #include "model_data/buffer.h"
 #include "model_data/vertexArray.h"
 #include "model_data/mesh.h"
+#include "model_data/generalMash.h"
+#include "model_data/combinedMesh.h"
 #include "shader.h"
 #include "transform.h"
 #include "model_data/texture.h"
@@ -59,7 +61,7 @@ static void mouseButtonCallback(GLFWwindow* window, int button, int action, int 
 
 
 int meshIndex;
-std::vector<Mesh> meshes;
+std::vector<GeneralMesh*> meshes;
 
 int main() {
 
@@ -85,7 +87,7 @@ int main() {
 		input.release(GLFW_KEY_LEFT);
 					});
 	input.setAction(GLFW_KEY_P, [](float) { 
-		meshes[meshIndex].getMaterial().getShader().reloadFromDisk();
+		meshes[meshIndex]->getMaterial().getShader().reloadFromDisk();
 		input.release(GLFW_KEY_P);
 					});
 	input.setAction(GLFW_KEY_W, [&cam](float delta) { cam.translate(cam.forward() * delta); });
@@ -169,18 +171,35 @@ int main() {
 		rayTracingShader.setMatrix3("viewMat", view);
 		fractalShader.setMatrix3("viewMat", view);
 */
-		Mesh& mesh = meshes[meshIndex];
-		Shader& shader = mesh.getMaterial().getShader();
-		shader.setUniformf1("time", elapsed);
-		//shader.setUniformi1("type", 2);
 		glm::mat3 view = glm::mat3(cam.getView());
-		shader.setMatrix3("viewMat", view);
-		shader.setMatrix4("model", glm::mat4(1.0f));
-		float resolution[2] = { 640.0f, 640.0f };
-		shader.setUniform2f("resolution", resolution);
-		shader.setUniformf3("cameraPos", cam.getPos());
-		mesh.bind(pv * trans1);
-		GL_CALL(glDrawElements(GL_TRIANGLES, mesh.getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+		GeneralMesh* mesh = meshes[meshIndex];
+		CombinedMesh* cm = dynamic_cast<CombinedMesh*>(mesh);
+		if (cm) {
+			auto& meshes = cm->getMeshes();
+			for (int i = 0; i < cm->getMeshCount(); i++) {
+				Shader& shader = cm->getMaterial(i).getShader();
+				shader.setUniformf1("time", elapsed);
+				shader.setMatrix3("viewMat", view);
+				shader.setMatrix4("model", glm::mat4(1.0f));
+				float resolution[2] = { 640.0f, 640.0f };
+				shader.setUniform2f("resolution", resolution);
+				shader.setUniformf3("cameraPos", cam.getPos());
+				cm->bind(pv * trans1, i);
+				GL_CALL(glDrawElements(GL_TRIANGLES, cm->getIbo(i).getSize(), GL_UNSIGNED_INT, nullptr));
+			}
+		}
+		else {
+			Shader& shader = mesh->getMaterial().getShader();
+			shader.setUniformf1("time", elapsed);
+			//shader.setUniformi1("type", 2);
+			shader.setMatrix3("viewMat", view);
+			shader.setMatrix4("model", glm::mat4(1.0f));
+			float resolution[2] = { 640.0f, 640.0f };
+			shader.setUniform2f("resolution", resolution);
+			shader.setUniformf3("cameraPos", cam.getPos());
+			mesh->bind(pv * trans1);
+			GL_CALL(glDrawElements(GL_TRIANGLES, mesh->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+		}
 
 		window.swapBuffers();
 	}
