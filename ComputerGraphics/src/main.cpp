@@ -20,6 +20,7 @@
 #include "model_data/mesh.h"
 #include "model_data/generalMash.h"
 #include "model_data/combinedMesh.h"
+#include "model_data/outlinedMesh.h"
 #include "shader.h"
 #include "transform.h"
 #include "model_data/texture.h"
@@ -85,10 +86,6 @@ int main() {
 	input.setAction(GLFW_KEY_LEFT, [](float) { 
 		meshIndex = --meshIndex % meshes.size();
 		input.release(GLFW_KEY_LEFT);
-					});
-	input.setAction(GLFW_KEY_P, [](float) { 
-		meshes[meshIndex]->getMaterial().getShader().reloadFromDisk();
-		input.release(GLFW_KEY_P);
 					});
 	input.setAction(GLFW_KEY_W, [&cam](float delta) { cam.translate(cam.forward() * delta); });
 	input.setAction(GLFW_KEY_S, [&cam](float delta) { cam.translate(-cam.forward() * delta); });
@@ -157,7 +154,7 @@ int main() {
 		}
 		last = now;
 		float fps = 1.0f / delta;
-		printf("%f.2\n", fps);
+		//printf("%f.2\n", fps);
 		glfwPollEvents();
 
 		input.execute(delta);
@@ -173,11 +170,10 @@ int main() {
 */
 		glm::mat3 view = glm::mat3(cam.getView());
 		GeneralMesh* mesh = meshes[meshIndex];
-		CombinedMesh* cm = dynamic_cast<CombinedMesh*>(mesh);
-		if (cm) {
+		if (CombinedMesh* cm = dynamic_cast<CombinedMesh*>(mesh)) {
 			auto& meshes = cm->getMeshes();
 			for (int i = 0; i < cm->getMeshCount(); i++) {
-				Shader& shader = cm->getMaterial(i).getShader();
+				const Shader& shader = cm->getMaterial(i).getShader();
 				shader.setUniformf1("time", elapsed);
 				shader.setMatrix3("viewMat", view);
 				shader.setMatrix4("model", glm::mat4(1.0f));
@@ -188,8 +184,22 @@ int main() {
 				GL_CALL(glDrawElements(GL_TRIANGLES, cm->getIbo(i).getSize(), GL_UNSIGNED_INT, nullptr));
 			}
 		}
-		else {
-			Shader& shader = mesh->getMaterial().getShader();
+		else if (OutlinedMesh* om = dynamic_cast<OutlinedMesh*>(mesh)) {
+			const Shader& shader = om->getMaterial().getShader();
+			shader.setUniformf1("time", elapsed);
+			shader.setMatrix3("viewMat", view);
+			shader.setMatrix4("model", glm::mat4(1.0f));
+			float resolution[2] = { 640.0f, 640.0f };
+			shader.setUniform2f("resolution", resolution);
+			shader.setUniformf3("cameraPos", cam.getPos());
+			om->bind(pv * trans1);
+			GL_CALL(glDrawElements(GL_TRIANGLES, om->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+			glFrontFace(GL_CW);
+			om->bindOutline(pv * trans1);
+			GL_CALL(glDrawElements(GL_TRIANGLES, om->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+			glFrontFace(GL_CCW);
+		} else {
+			const Shader& shader = mesh->getMaterial().getShader();
 			shader.setUniformf1("time", elapsed);
 			//shader.setUniformi1("type", 2);
 			shader.setMatrix3("viewMat", view);
