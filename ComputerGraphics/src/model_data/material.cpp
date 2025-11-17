@@ -16,7 +16,7 @@ Material::Material(const Material& m)
 	: specular(m.specular), diffuse(m.diffuse), ambient(m.ambient), roughness(m.roughness), specularStrength(m.specularStrength),
 	metallic(m.metallic), tex(m.tex), tex1(m.tex1), bumpMap(m.bumpMap), 
 	normalMap(m.bumpMap), shader(m.shader), uniformsI(m.uniformsI),
-	uniformsF(m.uniformsF), uniformsf3(m.uniformsf3) {
+	uniformsF(m.uniformsF), uniformsf3(m.uniformsf3), uniformsf2(m.uniformsf2) {
 	//printf("copied material\n");
 }
 
@@ -52,6 +52,9 @@ void Material::addUniformF3(std::string name, glm::vec3 uniform) {
 	uniformsf3.insert(std::make_pair(name, uniform));
 }
 
+void Material::addUniformF2(std::string name, glm::vec2 uniform) {
+	uniformsf2.insert(std::make_pair(name, uniform));
+}
 
 void Material::bind(const glm::mat4& projectionView) const {
 
@@ -71,6 +74,9 @@ void Material::bind(const glm::mat4& projectionView) const {
 	}
 	for (auto it = uniformsf3.begin(); it != uniformsf3.end(); it++) {
 		shader.setUniformf3(it->first.c_str(), it->second);
+	}
+	for (auto it = uniformsf2.begin(); it != uniformsf2.end(); it++) {
+		shader.setUniformf2(it->first.c_str(), it->second);
 	}
 
 	tex.bind();

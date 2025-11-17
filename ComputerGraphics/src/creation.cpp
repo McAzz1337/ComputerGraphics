@@ -133,6 +133,7 @@ void createRayTracerCube(std::vector<GeneralMesh*>& meshes) {
 	Mesh* cube = new Mesh();
 	cube->assignBuffers(vbo, ibo);
 	Material mat;
+	mat.addUniformF2("resolution", { 640.0f, 640.0f });
 	Shader shader("shaders/ray_tracer");
 	shader.bind();
 	mat.assignShader(shader);

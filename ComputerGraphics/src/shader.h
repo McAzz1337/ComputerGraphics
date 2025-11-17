@@ -44,7 +44,6 @@ public:
 	void setUniformi1(const char* name, int x) const;
 	void setUiformi1v(const char* name, int* x, int count) const;
 
-	void setUniform2f(const char* name, float* v) const;
 
 	void setMatrix3(const char* name, const glm::mat3& m) const;
 	void setMatrix4(const char* name, const glm::mat4& m) const;
@@ -63,9 +62,6 @@ public:
 			};
 	}
 
-public:
-	static void loadShaders(const std::string& shaderListFile);
-	static Shader* getShader(const std::string& path);
 
 private:
 	static void readShaderFile(const char* file, std::string& dst);

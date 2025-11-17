@@ -47,7 +47,6 @@ static void keyCallback(GLFWwindow* window, int key, int scan, int action, int m
 }
 
 static void cursorPosCallback(GLFWwindow* window, double x, double y) {
-	//printf("moved: %f, %f\n", x, y);
 	input.moveMouse({ (float) x, (float) y });
 }
 static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mod) {
@@ -84,7 +83,7 @@ int main() {
 		input.release(GLFW_KEY_RIGHT);
 					});
 	input.setAction(GLFW_KEY_LEFT, [](float) { 
-		meshIndex = --meshIndex % meshes.size();
+		if (--meshIndex < 0) meshIndex = meshes.size() - 1;
 		input.release(GLFW_KEY_LEFT);
 					});
 	input.setAction(GLFW_KEY_W, [&cam](float delta) { cam.translate(cam.forward() * delta); });
@@ -97,35 +96,13 @@ int main() {
 	input.setAction(GLFW_KEY_R, [&cam](float delta) { cam.reset(); });
 	input.setOnMouseMove([&cam](float delta, float x, float y) {
 		if (std::abs(x) < 1e-3f && std::abs(y) < 1e-3f) return;
-		cam.rotate(glm::vec3(y, x, 0.0f) * 0.01f);
+		cam.rotate(glm::normalize(glm::vec3(y, x, 0.0f)) * 0.03f);
 		input.clearMouseDelta();
 						 });
 #pragma endregion 
 
-#pragma region SHADERS
-	/*
-	Shader::loadShaders("shaders/shaders");
-	Shader* simpleShader = Shader::getShader("shaders/shader");
-	Shader* textureShader = Shader::getShader("shaders/tex_shader");
-	Shader* bumpShader = Shader::getShader("shaders/bump_shader");
-	bumpShader->setUniformi1("bump", 1);
-	*/
-#pragma endregion 
-
-	Mesh mesh;
-	Mesh plane;
-	Mesh cube;
-	Shader fractalShader("shaders/fractal_shader");
-	Shader rayTracingShader("shaders/ray_tracer");
-	{
-		float resolution[2] = { 640.0f, 640.0f };
-		//rayTracingShader.setUniform2f("resolution", resolution);
-	}
-
 	glm::mat4 trans1;
-	glm::mat4 trans2;
 
-	//textureShader->bind();
 	float scrollTime = 10.0f;
 	float scrollElapsed = 0.0f;
 
@@ -144,6 +121,38 @@ int main() {
 
 	createMeshes(meshes);
 	meshIndex = meshes.size() - 1;
+	std::function<void(const Shader&, const glm::mat3&)> setUniforms = [&elapsed, &trans1, &cam](const Shader& shader, const glm::mat3& view) {
+		shader.setUniformf1("time", elapsed);
+		shader.setMatrix3("viewMat", view);
+		shader.setMatrix4("model", trans1);
+		shader.setUniformf3("cameraPos", cam.getPos());
+		};
+	std::function<void(GeneralMesh*)> render = [&setUniforms, &trans1, &cam](GeneralMesh* mesh) {
+		const glm::mat4 pv = cam.getProjectionView();
+		const glm::mat3 view = glm::mat3(cam.getView());
+		if (CombinedMesh* cm = dynamic_cast<CombinedMesh*>(mesh)) {
+			for (int i = 0; i < cm->getMeshCount(); i++) {
+				const Shader& shader = cm->getMaterial(i).getShader();
+				setUniforms(shader, view);
+				cm->bind(pv * trans1, i);
+				GL_CALL(glDrawElements(GL_TRIANGLES, cm->getIbo(i).getSize(), GL_UNSIGNED_INT, nullptr));
+			}
+		} else if (OutlinedMesh* om = dynamic_cast<OutlinedMesh*>(mesh)) {
+			const Shader& shader = om->getMaterial().getShader();
+			setUniforms(shader, view);
+			om->bind(pv * trans1);
+			GL_CALL(glDrawElements(GL_TRIANGLES, om->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+			glFrontFace(GL_CW);
+			om->bindOutline(pv * trans1);
+			GL_CALL(glDrawElements(GL_TRIANGLES, om->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+			glFrontFace(GL_CCW);
+		} else {
+			const Shader& shader = mesh->getMaterial().getShader();
+			setUniforms(shader, view);
+			mesh->bind(pv * trans1);
+			GL_CALL(glDrawElements(GL_TRIANGLES, mesh->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
+		}
+		};
 	while (window.shouldClose()) {
 		std::chrono::time_point now = std::chrono::steady_clock::now();
 		float delta = std::chrono::duration<float, std::milli>(now - last).count() / 1000.0f;
@@ -161,55 +170,9 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm::mat4 pv = cam.getProjectionView();
 
-/*
-		fractalShader.setUniformf1("time", elapsed);
-		rayTracingShader.setMatrix3("viewMat", view);
-		fractalShader.setMatrix3("viewMat", view);
-*/
-		glm::mat3 view = glm::mat3(cam.getView());
-		GeneralMesh* mesh = meshes[meshIndex];
-		if (CombinedMesh* cm = dynamic_cast<CombinedMesh*>(mesh)) {
-			auto& meshes = cm->getMeshes();
-			for (int i = 0; i < cm->getMeshCount(); i++) {
-				const Shader& shader = cm->getMaterial(i).getShader();
-				shader.setUniformf1("time", elapsed);
-				shader.setMatrix3("viewMat", view);
-				shader.setMatrix4("model", glm::mat4(1.0f));
-				float resolution[2] = { 640.0f, 640.0f };
-				shader.setUniform2f("resolution", resolution);
-				shader.setUniformf3("cameraPos", cam.getPos());
-				cm->bind(pv * trans1, i);
-				GL_CALL(glDrawElements(GL_TRIANGLES, cm->getIbo(i).getSize(), GL_UNSIGNED_INT, nullptr));
-			}
-		}
-		else if (OutlinedMesh* om = dynamic_cast<OutlinedMesh*>(mesh)) {
-			const Shader& shader = om->getMaterial().getShader();
-			shader.setUniformf1("time", elapsed);
-			shader.setMatrix3("viewMat", view);
-			shader.setMatrix4("model", glm::mat4(1.0f));
-			float resolution[2] = { 640.0f, 640.0f };
-			shader.setUniform2f("resolution", resolution);
-			shader.setUniformf3("cameraPos", cam.getPos());
-			om->bind(pv * trans1);
-			GL_CALL(glDrawElements(GL_TRIANGLES, om->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
-			glFrontFace(GL_CW);
-			om->bindOutline(pv * trans1);
-			GL_CALL(glDrawElements(GL_TRIANGLES, om->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
-			glFrontFace(GL_CCW);
-		} else {
-			const Shader& shader = mesh->getMaterial().getShader();
-			shader.setUniformf1("time", elapsed);
-			//shader.setUniformi1("type", 2);
-			shader.setMatrix3("viewMat", view);
-			shader.setMatrix4("model", glm::mat4(1.0f));
-			float resolution[2] = { 640.0f, 640.0f };
-			shader.setUniform2f("resolution", resolution);
-			shader.setUniformf3("cameraPos", cam.getPos());
-			mesh->bind(pv * trans1);
-			GL_CALL(glDrawElements(GL_TRIANGLES, mesh->getIbo().getSize(), GL_UNSIGNED_INT, nullptr));
-		}
+		render(meshes[meshIndex]);
+
 
 		window.swapBuffers();
 	}

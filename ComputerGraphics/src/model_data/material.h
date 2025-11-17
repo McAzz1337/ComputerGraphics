@@ -38,6 +38,7 @@ private:
 	std::unordered_map<std::string, int> uniformsI;
 	std::unordered_map<std::string, float> uniformsF;
 	std::unordered_map<std::string, glm::vec3> uniformsf3;
+	std::unordered_map<std::string, glm::vec2> uniformsf2;
 
 
 
@@ -56,6 +57,7 @@ public:
 	void addUniformI(std::string name, int uniform);
 	void addUniformF(std::string name, float uniform);
 	void addUniformF3(std::string name, glm::vec3 uniform);
+	void addUniformF2(std::string name, glm::vec2 uniform);
 
 	void bind(const glm::mat4& projectionView) const;
 	void assignAssets(std::unordered_map<assetimporter::AssetType, std::string> assets);

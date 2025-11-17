@@ -160,11 +160,6 @@ void Shader::setUiformi1v(const char* name, int* x, int count) const {
 
 
 
-void Shader::setUniform2f(const char* name, float* v) const {
-
-	int uniform = getUniform(name);
-	glUniform2f(uniform, v[0], v[1]);
-}
 
 void Shader::setMatrix3(const char* name, const glm::mat3& m) const {
 	int uniform = getUniform(name);
@@ -239,7 +234,6 @@ bool Shader::compileShader(uint32_t& id, int type, const std::string& src, bool 
 
 	int isCompiled = 0;
 	glGetShaderiv(id, GL_COMPILE_STATUS, &isCompiled);
-
 	if (isCompiled == GL_FALSE) {
 		int maxLength = 0;
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &maxLength);
@@ -249,7 +243,6 @@ bool Shader::compileShader(uint32_t& id, int type, const std::string& src, bool 
 		glGetShaderInfoLog(id, maxLength, &length, infoLog);
 
 		glDeleteShader(id);
-
 		switch (type) {
 			case GL_VERTEX_SHADER:		std::cout << "Vertex ";		break;
 			case GL_GEOMETRY_SHADER:	std::cout << "Geometry ";	break;
@@ -257,7 +250,6 @@ bool Shader::compileShader(uint32_t& id, int type, const std::string& src, bool 
 
 		}
 		std::cout << "shader compilation failure!" << std::endl << infoLog << std::endl;
-
 		if (crash)
 			__debugbreak();
 
@@ -276,31 +268,25 @@ bool Shader::linkShader(uint32_t& program, int vs, int fs, bool crash) {
 	glLinkProgram(program);
 	int isLinked = 0;
 	glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-
 	if (isLinked == GL_FALSE) {
 		int maxLength = 0;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-		// The maxLength includes the NULL character
+                                              
 		char* infoLog = new char[maxLength];
 		int length = 0;
 		glGetProgramInfoLog(program, maxLength, &length, infoLog);
-
-		// We don't need the program anymore.
+                                       
 		glDeleteProgram(program);
-		// Don't leak shaders either.
+                               
 		glDeleteShader(vs);
 		glDeleteShader(fs);
-
 		std::cout << "Shader link failure!" << std::endl;
 		std::cout << infoLog << std::endl;
-
 		if (crash)
 			__debugbreak();
 
 		return false;
 	}
-
 
 	glDeleteShader(vs);
 	glDeleteShader(fs);
@@ -308,11 +294,3 @@ bool Shader::linkShader(uint32_t& program, int vs, int fs, bool crash) {
 	return true;
 }
 
-void Shader::loadShaders(const std::string& shaderListFile) {
-	std::vector<std::string> shaderFilePaths;
-	readFileSplit(shaderListFile, shaderFilePaths);
-	for (auto& path : shaderFilePaths) {
-		Shader shader;
-		shader.load(path);
-	}
-}

@@ -16,12 +16,12 @@ void main() {
 	if (isFin == 1) {
 		float s = pos.z > 0.0 ? 1.0 : -1.0;
 		float sine = sin(time * 1.2 + position.y);
-		float cosine = cos(time + position.y);
+		float cosine = cos(time * 1. + position.y);
 		position.y += sine * 0.3 * (pos.y + 0.7) ;
 		if (s > 0.0) {
-			position.z += max(sine, 0.0) * 0.4 * (pos.y + 0.7) * s + max(wiggle, 0.0) * 0.2;//max(sine, 0.0) * 0.3;
+			position.z += max(max(sine, 0.0) * 0.4 * (pos.y + 0.7) * s + max(wiggle, 0.0) * 0.2, -0.1);
 		} else {
-			position.z += min(sine, 0.0) * 0.4 * (pos.y + 0.7) * s - min(wiggle, 0.0) * 0.2;
+			position.z += min(min(sine, 0.0) * 0.4 * (pos.y + 0.7) * s - min(wiggle, 0.0) * 0.2, 0.1);
 		}
 
 	}

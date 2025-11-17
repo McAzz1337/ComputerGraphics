@@ -29,13 +29,8 @@ out vec4 color;
 
 void main(){
 	vec3 n = texture(bump, f_uv).xyz;
-	vec3 norm;
-	if (n.x == 0.0 && n.y == 0.0 && n.z == 0.0) {
-		norm = f_normal;
-	} else {
-		norm = normalize((n * 2.0 - 1.0));
-	}
-	vec3 light = lightPos + (vec3(sin(time * 0.5), 0.0, cos(time * 0.5)) * 3.0);
+	vec3 norm = normalize((n * 2.0 - 1.0));
+	vec3 light = lightPos + (vec3(sin(time), 0.0, 1.0) * 3.0);
 	light = f_viewMat * light;
 	vec3 lightDir = normalize(light - fragPos.xyz);
 
@@ -45,7 +40,7 @@ void main(){
 	vec3 diffuse = diff * lightColor;
 
 	vec3 viewDir = normalize(cameraPos - fragPos.xyz);
-	vec3 reflectDir = reflect(lightDir, norm);
+	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
 	vec3 specular = spec * lightColor;  
 
